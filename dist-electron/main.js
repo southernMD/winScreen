@@ -2,7 +2,8 @@ import { ipcMain, app, BrowserWindow, session, desktopCapturer } from "electron"
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-createRequire(import.meta.url);
+const require2 = createRequire(import.meta.url);
+const robot = require2("robotjs");
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname, "..");
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
@@ -11,7 +12,6 @@ const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
 let win;
 function createWindow() {
-  console.log();
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     // frame: false,
@@ -22,7 +22,15 @@ function createWindow() {
   win.webContents.toggleDevTools();
   ipcMain.on("close-win", (event) => {
     win.minimize();
-    event.returnValue = "";
+    let timer = setInterval(() => {
+      if (win == null ? void 0 : win.isMinimized()) {
+        clearInterval(timer);
+        event.returnValue = "";
+      }
+    }, 10);
+  });
+  win.webContents.on("destroyed", () => {
+    app.quit();
   });
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
@@ -31,7 +39,7 @@ function createWindow() {
   }
   return win;
 }
-function createPickWindow() {
+function createPickWindow(imageUrl) {
   const win2 = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     transparent: true,
@@ -53,13 +61,17 @@ function createPickWindow() {
   if (VITE_DEV_SERVER_URL) {
     win2.loadURL(VITE_DEV_SERVER_URL + "#/pick");
   } else {
-    win2.loadFile(path.join(RENDERER_DIST, "index.html#/pick"));
+    win2.loadURL(`file://${__dirname}/../dist/index.html#/pick`);
   }
+  win2.webContents.on("dom-ready", () => {
+    win2.webContents.send("get-screen-img", { imageUrl });
+  });
   win2.setFullScreen(true);
+  win2.setAlwaysOnTop(true, "screen-saver");
   return win2;
 }
 ipcMain.on("create-pick-win", (e, { imageUrl }) => {
-  const pickWin = createPickWindow();
+  const pickWin = createPickWindow(imageUrl);
   pickWin.focus();
 });
 app.on("window-all-closed", () => {
@@ -76,8 +88,8 @@ app.on("activate", () => {
 app.whenReady().then(() => {
   createWindow();
   session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
-    console.log(request);
     desktopCapturer.getSources({ types: ["screen"] }).then((sources) => {
+      robot.moveMouse(1e4, 1e4);
       callback({ video: sources[0], audio: "loopback" });
     });
   });

@@ -2,7 +2,7 @@
  * @Author: southernMD 2483723241@qq.com
  * @Date: 2025-01-25 17:14:45
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-01-25 21:32:54
+ * @LastEditTime: 2025-01-26 18:46:45
  * @FilePath: \winPick\src\App.tsx
  * @Description: 入口文件
  */
@@ -37,9 +37,9 @@ function App() {
         console.log('Captured frame as image URL:', imageUrl);
 
         // 将图片 URL 显示在页面上
-        const img = document.createElement('img');
-        img.src = imageUrl;
-        document.body.appendChild(img);  // 将图片添加到页面上
+        // const img = document.createElement('img');
+        // img.src = imageUrl;
+        // document.body.appendChild(img);  // 将图片添加到页面上
         window.ipcRenderer.send('create-pick-win',{imageUrl})
         // 停止视频流
         stream.getTracks().forEach(track => track.stop());

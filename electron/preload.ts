@@ -1,8 +1,8 @@
 /*
  * @Author: southernMD 2483723241@qq.com
  * @Date: 2025-01-25 17:14:45
- * @LastEditors: southernMD 2483723241@qq.com
- * @LastEditTime: 2025-01-25 20:07:56
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2025-01-26 20:50:18
  * @FilePath: \winPick\electron\preload.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -30,6 +30,10 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
     const [channel, ...omit] = args
     return ipcRenderer.sendSync(channel, ...omit)
   },
+  removeListener(...args: Parameters<typeof ipcRenderer.removeListener>){
+    const [channel, ...omit] = args
+    return ipcRenderer.removeListener(channel, ...omit)
+  }
   // You can expose other APTs you need here.
   // ...
 })

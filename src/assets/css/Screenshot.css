@@ -1,0 +1,27 @@
+.screenshot{
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    user-select: none;
+}
+.bg{
+    filter: brightness(0.4);
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+}
+.choice{
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 2;
+}
+
+canvas{
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 3;
+}

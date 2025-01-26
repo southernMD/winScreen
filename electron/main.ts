@@ -5,8 +5,10 @@ import { app, BrowserWindow, desktopCapturer, ipcMain, session,screen, globalSho
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-
+// import robot from 'robotjs'
 const require = createRequire(import.meta.url)
+const robot = require('robotjs') as typeof import('robotjs')
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // The built directory structure
@@ -30,8 +32,6 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let win: BrowserWindow | null
 
 function createWindow() {
-  console.log();
-  
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
     // frame: false,
@@ -46,7 +46,15 @@ function createWindow() {
   // })
   ipcMain.on('close-win',(event)=>{
     win!.minimize()
-    event.returnValue = ''
+    let timer = setInterval(()=>{
+      if(win?.isMinimized()){
+        clearInterval(timer)
+        event.returnValue = ''
+      }
+    },10)
+  })
+  win.webContents.on('destroyed',()=>{
+    app.quit()
   })
 
   if (VITE_DEV_SERVER_URL) {
@@ -59,7 +67,7 @@ function createWindow() {
   return win
 }
 
-function createPickWindow(){
+function createPickWindow(imageUrl:Base64URLString){
   const win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
     transparent: true,
@@ -79,14 +87,18 @@ function createPickWindow(){
     win.loadURL(VITE_DEV_SERVER_URL+'#/pick')
   } else {
     // win.loadFile('dist/index.html')
-    win.loadFile(path.join(RENDERER_DIST, 'index.html#/pick'))
+    win.loadURL(`file://${__dirname}/../dist/index.html#/pick`)
   }
+  win.webContents.on('dom-ready',()=>{
+    win.webContents.send('get-screen-img',{imageUrl})
+  })
   win.setFullScreen(true)
+  win.setAlwaysOnTop(true,'screen-saver')
   return win
 }
 
 ipcMain.on('create-pick-win',(e,{imageUrl})=>{
-  const pickWin = createPickWindow()
+  const pickWin = createPickWindow(imageUrl)
   pickWin.focus()
 })
 
@@ -111,8 +123,8 @@ app.on('activate', () => {
 app.whenReady().then(()=>{
   const win = createWindow()
   session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
-    console.log(request);
     desktopCapturer.getSources({ types: ['screen'] }).then((sources) => {
+      robot.moveMouse(10000, 10000);
       // Grant access to the first screen found.
       callback({ video: sources[0], audio: 'loopback', })
     })
