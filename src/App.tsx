@@ -2,11 +2,12 @@
  * @Author: southernMD 2483723241@qq.com
  * @Date: 2025-01-25 17:14:45
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-01-26 18:46:45
+ * @LastEditTime: 2025-01-27 14:27:12
  * @FilePath: \winPick\src\App.tsx
  * @Description: 入口文件
  */
 import { useState } from 'react'
+import { CropToolbar } from './components/CropToolbar';
 
 function App() {
   const pickHandle = async () => {
@@ -51,6 +52,7 @@ function App() {
   return (
     <>
       <button onClick={pickHandle}>点击截屏</button>
+      <CropToolbar />
     </>
   )
 }

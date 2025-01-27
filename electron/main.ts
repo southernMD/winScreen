@@ -48,8 +48,10 @@ function createWindow() {
     win!.minimize()
     let timer = setInterval(()=>{
       if(win?.isMinimized()){
-        clearInterval(timer)
-        event.returnValue = ''
+        setTimeout(()=>{
+          clearInterval(timer)
+          event.returnValue = ''
+        },50)
       }
     },10)
   })
@@ -73,7 +75,7 @@ function createPickWindow(imageUrl:Base64URLString){
     transparent: true,
     frame: false, // 关闭窗口边框
     alwaysOnTop: true, // 确保窗口始终在最上面
-    skipTaskbar: true, // 不显示在任务栏
+    // skipTaskbar: true, // 不显示在任务栏
     resizable: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),

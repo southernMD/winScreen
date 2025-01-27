@@ -1,0 +1,80 @@
+/*
+ * @Description: create by southernMD
+ */
+.toolbar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    padding: 6px 12px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    z-index: 4;
+}
+
+.divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.toolGroup {
+    display: flex;
+    align-items: center;
+}
+
+.toolButton {
+    width: 40px;
+    height: 35px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4b5563;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    outline: none;
+}
+
+.toolButton:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1f2937;
+}
+
+.toolButton:active {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.toolButton.active {
+    background: #f3f4f6;
+    color: #2563eb;
+}
+
+.ratioButton {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #4b5563;
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ratioButton:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.ratioButton.active {
+    border-color: #2563eb;
+    color: #2563eb;
+    background: rgba(37, 99, 235, 0.1);
+}

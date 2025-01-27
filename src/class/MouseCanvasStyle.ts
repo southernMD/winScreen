@@ -22,6 +22,10 @@ export class MouseCanvasStyle {
         endX: 0,
         endY: 0
     };
+    public screenShotSizeUpdateStartMousePostion = {
+        x:0,
+        y:0
+    }
 
     private onClipChange: ((clip: { startX: number, startY: number, endX: number, endY: number }) => void) | null = null;
     // private onCursorStyleChange: ((cursor: string) => void) | null = null;
@@ -36,7 +40,8 @@ export class MouseCanvasStyle {
     // public setOnCursorStyleChange(callback: (cursor: string) => void) {
     //     this.onCursorStyleChange = callback
     // }
-    public drawRectangle = (tips: string[] = []) => {
+    //type = 0 默认 type = 1 y固定 type = 2 x 固定
+    public drawRectangle = (tips: string[] = [], type = 0) => {
         const ctx = this.canvas!.getContext('2d')!;
         // 清除之前的矩形
         ctx.clearRect(0, 0, this.canvas!.width, this.canvas!.height);
@@ -70,13 +75,18 @@ export class MouseCanvasStyle {
         // 更新点坐标，如果不在 tips 中则重新计算
         for (const [key, value] of Object.entries(points)) {
             if (!tips.includes(key)) {
-                (this as any)[key] = value; // 动态更新点坐标
+                //type = 1 y固定
+                if (type == 1) {
+                    (this as any)[key] = { x: value.x, y: (this as any)[key].y };
+                } else if (type == 2) {
+                    (this as any)[key] = { x: (this as any)[key].x, y: value.y };
+                } else {
+                    (this as any)[key] = value; // 动态更新点坐标
+                }
             }
             const point = (this as any)[key];
             ctx.fillRect(point.x, point.y, this.squareSize, this.squareSize);
         }
-
-        this.draw(ctx)
         // 更新裁剪区域
         this.clip.startX = rectStartX;
         this.clip.startY = rectStartY;
@@ -249,18 +259,147 @@ export class MouseCanvasStyle {
                 // }
                 break
             case 'n-resize':
+                this.startX = this.topLeft.x + this.squareSize / 2
+                this.startY = y
+                this.endX = this.bottomRight.x + this.squareSize / 2
+                this.endY = this.bottomRight.y + this.squareSize / 2
+                this.drawRectangle(['bottomLeft', 'bottomMid', 'bottomRight'], 2)
+                break
+            case 's-resize':
+                this.startX = this.bottomRight.x + this.squareSize / 2
+                this.startY = y
+                this.endX = this.topLeft.x + this.squareSize / 2
+                this.endY = this.topLeft.y + this.squareSize / 2
+                this.drawRectangle(['topLeft', 'topMid', 'topRight'], 2)
+                break
+            case 'w-resize':
+                this.startX = x
+                this.startY = this.topLeft.y + this.squareSize / 2
+                this.endX = this.bottomRight.x + this.squareSize / 2
+                this.endY = this.bottomRight.y + this.squareSize / 2
+                this.drawRectangle(['topRight', 'bottomRight', 'midRight'], 1)
+                break
+            case 'e-resize':
+                this.startX = x
+                this.startY = this.topRight.y + this.squareSize / 2
+                this.endX = this.bottomLeft.x + this.squareSize / 2
+                this.endY = this.bottomLeft.y + this.squareSize / 2
+                this.drawRectangle(['topLeft', 'bottomLeft', 'midLeft'], 1)
+                break
+            case 'move':
+                // 计算鼠标的移动位移
+                const deltaX = x - this.screenShotSizeUpdateStartMousePostion.x;
+                const deltaY = y - this.screenShotSizeUpdateStartMousePostion.y;
+                this.screenShotSizeUpdateStartMousePostion = {
+                    x,y
+                }
+                this.screenMove({deltaX,deltaY})
+                break;
         }
     }
 
-    public screenShotSizeEndUpdateHandle = (e: MouseEvent) => {
-        if (this.startX >= this.endX && this.startY <= this.endY) {
-            this.screenShotSizeUpdateHandle(e,'ne-resize')
-        } else if (this.startX <= this.endX && this.startY >= this.endY) {
-            this.screenShotSizeUpdateHandle(e,'sw-resize')
-        } else if (this.startX >= this.endX && this.startY >= this.endY) {
-            this.screenShotSizeUpdateHandle(e,'se-resize')
-        } else if(this.startX <= this.endX && this.startY <= this.endY){
-            this.screenShotSizeUpdateHandle(e,'nw-resize')
+    public screenShotSizeEndUpdateHandle = (e: MouseEvent, fixedMouseCursor: string) => {
+        if (fixedMouseCursor.split('-')[0].length == 1) {
+            if (fixedMouseCursor == 'n-resize' && this.startY > this.endY) {
+                this.screenShotSizeUpdateHandle(e, 's-resize')
+            } else if (fixedMouseCursor == 's-resize' && this.startY <= this.endY) {
+                this.screenShotSizeUpdateHandle(e, 'n-resize')
+            } else if (fixedMouseCursor == 'w-resize' && this.startX > this.endX) {
+                this.screenShotSizeUpdateHandle(e, 'e-resize')
+            } else if (fixedMouseCursor == 'e-resize' && this.startX <= this.endX) {
+                this.screenShotSizeUpdateHandle(e, 'w-resize')
+            }
+        } else {
+            if (this.startX > this.endX && this.startY < this.endY) {
+                this.screenShotSizeUpdateHandle(e, 'ne-resize')
+            } else if (this.startX < this.endX && this.startY > this.endY) {
+                this.screenShotSizeUpdateHandle(e, 'sw-resize')
+            } else if (this.startX > this.endX && this.startY > this.endY) {
+                this.screenShotSizeUpdateHandle(e, 'se-resize')
+            } else if (this.startX < this.endX && this.startY < this.endY) {
+                this.screenShotSizeUpdateHandle(e, 'nw-resize')
+            }
         }
     }
+    private screenMove = ({ deltaX, deltaY }: { deltaX: number; deltaY: number }) => {
+        // 获取 canvas 的宽度和高度
+        const canvasWidth = this.canvas!.width;
+        const canvasHeight = this.canvas!.height;
+    
+        // 矫正位移，使得矩形不会超出画布范围
+        let correctedDeltaX = deltaX;
+        let correctedDeltaY = deltaY;
+    
+        // 判断左上角与右下角是否超出边界
+        const rectStartX = Math.min(this.startX + deltaX, this.endX + deltaX);
+        const rectStartY = Math.min(this.startY + deltaY, this.endY + deltaY);
+        const rectEndX = Math.max(this.startX + deltaX, this.endX + deltaX);
+        const rectEndY = Math.max(this.startY + deltaY, this.endY + deltaY);
+    
+        // 矫正 deltaX
+        if (rectStartX < 0) {
+            correctedDeltaX = correctedDeltaX - rectStartX;
+        }
+        if (rectEndX > canvasWidth) {
+            correctedDeltaX = correctedDeltaX - (rectEndX - canvasWidth);
+        }
+    
+        // 矫正 deltaY
+        if (rectStartY < 0) {
+            correctedDeltaY = correctedDeltaY - rectStartY;
+        }
+        if (rectEndY > canvasHeight) {
+            correctedDeltaY = correctedDeltaY - (rectEndY - canvasHeight);
+        }
+    
+        // 更新矩形的起点和终点坐标
+        this.startX += correctedDeltaX;
+        this.startY += correctedDeltaY;
+        this.endX += correctedDeltaX;
+        this.endY += correctedDeltaY;
+    
+        // 更新四角和中间点的坐标
+        const points = [
+            this.topLeft,
+            this.topRight,
+            this.bottomLeft,
+            this.bottomRight,
+            this.topMid,
+            this.bottomMid,
+            this.midLeft,
+            this.midRight,
+        ];
+        points.forEach((point) => {
+            point.x += correctedDeltaX;
+            point.y += correctedDeltaY;
+        });
+    
+        const ctx = this.canvas!.getContext('2d')!;
+    
+        ctx.clearRect(0, 0, this.canvas!.width, this.canvas!.height);
+    
+        // 计算矩形的宽度和高度
+        const width = Math.abs(this.endX - this.startX);
+        const height = Math.abs(this.endY - this.startY);
+        const rectX = Math.min(this.startX, this.endX);
+        const rectY = Math.min(this.startY, this.endY);
+    
+        ctx.strokeStyle = '#39C5BB';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(rectX, rectY, width, height);
+    
+        ctx.fillStyle = '#39C5BB';
+        this.draw(ctx);
+    
+        // 更新裁剪区域
+        this.clip.startX = rectX;
+        this.clip.startY = rectY;
+        this.clip.endX = rectX + width;
+        this.clip.endY = rectY + height;
+    
+        // 触发裁剪区域变化的回调
+        if (this.onClipChange) {
+            this.onClipChange(this.clip);
+        }
+    };
 }
