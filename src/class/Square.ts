@@ -1,9 +1,10 @@
 /*
  * @Description: create by southernMD
  */
-import { Normal } from "./normal";
-import { XY } from "./otherType";
-import { Shape } from "./shape";
+
+import { Normal } from "./Normal";
+import { Point } from "./otherType";
+import { Shape } from "./Shape";
 
 export class Square extends Shape {
     private normal: Normal;
@@ -42,18 +43,49 @@ export class Square extends Shape {
         window.removeEventListener("mouseup", this.endDrawSquare)
     }
 
-    private drawRectangle() {
-        console.log(this);
+    public drawRectangle(tips: string[] = [], type = 0) {
+        // console.log(this);
         const rectStartX = Math.min(this.normal.startX, this.normal.endX);
         const rectStartY = Math.min(this.normal.startY, this.normal.endY);
         const rectEndX = Math.max(this.normal.startX, this.normal.endX);
         const rectEndY = Math.max(this.normal.startY, this.normal.endY);
         const width = rectEndX - rectStartX;
         const height = rectEndY - rectStartY;
-        // 绘制矩形
+        if(width == 0 && height == 0) return
         const ctx = Shape.canvas.getContext('2d')!
+        ctx.fillStyle = '#39C5BB';
+        const points = {
+            topLeft: { x: rectStartX - this.normal.squareSize / 2, y: rectStartY - this.normal.squareSize / 2 },
+            topRight: { x: rectEndX - this.normal.squareSize / 2, y: rectStartY - this.normal.squareSize / 2 },
+            bottomLeft: { x: rectStartX - this.normal.squareSize / 2, y: rectEndY - this.normal.squareSize / 2 },
+            bottomRight: { x: rectEndX - this.normal.squareSize / 2, y: rectEndY - this.normal.squareSize / 2 },
+            topMid: { x: rectStartX + width / 2 - this.normal.squareSize / 2, y: rectStartY - this.normal.squareSize / 2 },
+            bottomMid: { x: rectStartX + width / 2 - this.normal.squareSize / 2, y: rectEndY - this.normal.squareSize / 2 },
+            midLeft: { x: rectStartX - this.normal.squareSize / 2, y: rectStartY + height / 2 - this.normal.squareSize / 2 },
+            midRight: { x: rectEndX - this.normal.squareSize / 2, y: rectStartY + height / 2 - this.normal.squareSize / 2 }
+        }
+        for (const [key, value] of Object.entries(points)) {
+            if (!tips.includes(key)) {
+                //type = 1 y固定
+                if (type == 1) {
+                    (this.normal as any)[key] = { x: value.x, y: (this as any)[key].y };
+                } else if (type == 2) {
+                    (this.normal as any)[key] = { x: (this as any)[key].x, y: value.y };
+                } else {
+                    (this.normal as any)[key] = value // 动态更新点坐标
+                }
+            }
+            if(this === Shape.selectingShape?.object){
+                const point = (this.normal as any)[key];
+                ctx.fillRect(point.x, point.y, this.normal.squareSize, this.normal.squareSize);
+            }
+        }
+        // 绘制矩形
         ctx.strokeStyle = '#39C5BB';
         ctx.lineWidth = 2;
         ctx.strokeRect(rectStartX, rectStartY, width, height);
+    }
+    public getNormal(){
+        return this.normal
     }
 }

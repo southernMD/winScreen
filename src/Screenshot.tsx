@@ -6,11 +6,12 @@ import './assets/css/Screenshot.css'
 import { MouseCanvasStyle } from "./class/MouseCanvasStyle";
 import { CropToolbar } from "./components/CropToolbar";
 import { Square } from './class/Square'
-import { Shape } from './class/shape'
+import { Shape } from './class/Shape'
 
 export default function Screenshot() {
     const [imgUrl, setImgUrl] = useState('')
     const [mouseCursor, setMouseCursor] = useState('default')
+    const utilsRef = useRef<"" | "square" | "circle" | "pencil" | "type" | undefined>("");
     const mouseCursorRef = useRef('default');
     let fixedMouseCursor = 'default'
     useEffect(() => {
@@ -44,11 +45,16 @@ export default function Screenshot() {
     const mouseCursorStyleHandle = useCallback((e: MouseEvent) => {
         const type = mouseCanvasCtxRef.current!.mouseCursorStyleHandle(e);
         setMouseCursor(type);
+        if(!(utilsRef.current !== '' && fixedMouseCursor === 'move')){
+            if(Shape.shapeList.length != 0) Shape.canvas.style.cursor = 'default'
+        }
     }, []);
 
     const screenShotSizeUpdateStartHandle = useCallback((e: MouseEvent) => {
+        console.log(e.target);
         if (!(e.target instanceof HTMLCanvasElement)) return;
         if (e.button !== 0) return;
+        if (Shape.selectingShape) return
         fixedMouseCursor = mouseCursorRef.current;
         mouseCanvasCtxRef.current!.screenShotSizeUpdateStartMousePostion.x = e.clientX;
         mouseCanvasCtxRef.current!.screenShotSizeUpdateStartMousePostion.y = e.clientY;
@@ -56,6 +62,11 @@ export default function Screenshot() {
     }, [fixedMouseCursor]);
 
     const screenShotSizeUpdateHandle = useCallback((e: MouseEvent) => {
+        console.log(utilsRef.current,fixedMouseCursor)
+        if(utilsRef.current !== '' && fixedMouseCursor === 'move') return
+        else {
+            if(Shape.shapeList.length != 0)Shape.canvas.style.cursor = 'default'
+        }
         mouseCanvasCtxRef.current!.screenShotSizeUpdateHandle(e, fixedMouseCursor);
         const { startX, startY, endX, endY } = mouseCanvasCtxRef.current!.clip;
         Shape.initCanvas(
@@ -64,13 +75,14 @@ export default function Screenshot() {
             Math.abs(startX - endX),
             Math.abs(startY - endY)
         );
-    }, [fixedMouseCursor, mouseCanvasCtxRef]);
+    }, [fixedMouseCursor, mouseCanvasCtxRef,utilsRef]);
 
     const screenShotSizeUpdateEndHandle = useCallback((e: MouseEvent) => {
+        window.removeEventListener("mousemove", screenShotSizeUpdateHandle);
         if (!(e.target instanceof HTMLCanvasElement)) return;
+        if (utilsRef.current !== '' && fixedMouseCursor === 'move') return
         if (!["default", "move"].includes(fixedMouseCursor))
             mouseCanvasCtxRef.current!.screenShotSizeEndUpdateHandle(e, fixedMouseCursor);
-        window.removeEventListener("mousemove", screenShotSizeUpdateHandle);
         const { startX, startY, endX, endY } = mouseCanvasCtxRef.current!.clip;
         Shape.initCanvas(
             startX,
@@ -78,7 +90,7 @@ export default function Screenshot() {
             Math.abs(startX - endX),
             Math.abs(startY - endY)
         );
-    }, [fixedMouseCursor, mouseCanvasCtxRef]);
+    }, [fixedMouseCursor, mouseCanvasCtxRef,utilsRef.current]);
 
     const mouseupHandle = useCallback((e: MouseEvent) => {
         if (!(e.target instanceof HTMLCanvasElement)) return
@@ -105,8 +117,8 @@ export default function Screenshot() {
         });
         setMouseCursor('default')
         fixedMouseCursor = 'default'
-
-        Shape.clearCanvas()
+        utilsRef.current = ''
+        Shape.clearCanvasAndDom()
 
         window.removeEventListener('contextmenu', resizeRectangle)
         window.removeEventListener('mousemove', mouseUpdateHandle)
@@ -154,23 +166,35 @@ export default function Screenshot() {
     }, [])
 
     const onDrawSquare = () => {
-        window.removeEventListener("mousedown", mousedownHandle)
-        window.removeEventListener('mousedown', screenShotSizeUpdateStartHandle)
-        window.removeEventListener('mousemove', screenShotSizeUpdateHandle)
-        window.removeEventListener('mouseup', screenShotSizeUpdateEndHandle)
-        window.removeEventListener('mouseup', mouseupHandle)
-        setMouseCursor('default')
+        if(utilsRef.current == 'square'){
+            utilsRef.current = ''
+            window.removeEventListener('mousedown',createSquareHandle)
+        }else{
+            setMouseCursor('default')
+            utilsRef.current = 'square'
+            window.addEventListener('mousedown',createSquareHandle)
+        }
+        // window.removeEventListener("mousedown", mousedownHandle)
+        // window.removeEventListener('mousedown', screenShotSizeUpdateStartHandle)
+        // window.removeEventListener('mousemove', screenShotSizeUpdateHandle)
+        // window.removeEventListener('mouseup', screenShotSizeUpdateEndHandle)
+        // window.removeEventListener('mouseup', mouseupHandle)
 
-        Shape.canvas.style.cursor = 'default'
-        window.addEventListener('mousedown',createSquareHandle)
     }
+    useEffect(()=>{
+        if(utilsRef.current == ''){
+            Shape.canvas.style.cursor = 'move'
+        }else{
+            Shape.canvas.style.cursor = 'default'
+        }
+    },[utilsRef.current])
 
-    const createSquareHandle = (e: MouseEvent) => {
+    const createSquareHandle = useCallback((e: MouseEvent) => {
         if (e.button !== 0) return;
         if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
+        if (Shape.selectingShape) return;
         const square = new Square(e.clientX,e.clientY)
-
-    }
+    },[])
 
     const savePick = () => {
         const img = new Image()
@@ -210,6 +234,7 @@ export default function Screenshot() {
                     onDrawSquare={onDrawSquare}
                     onCheck={savePick}
                     onQuit={closeWindowHandle}
+                    active={utilsRef.current}
                 />
                 <canvas className="select-box" ref={canvasRef}
                     style={{ cursor: mouseCursor }}
