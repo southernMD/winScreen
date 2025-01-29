@@ -7,6 +7,7 @@ import { MouseCanvasStyle } from "./class/MouseCanvasStyle";
 import { CropToolbar } from "./components/CropToolbar";
 import { Square } from './class/Square'
 import { Shape } from './class/Shape'
+import { Circle } from "./class/Circle";
 
 export default function Screenshot() {
     const [imgUrl, setImgUrl] = useState('')
@@ -168,34 +169,46 @@ export default function Screenshot() {
     const onDrawSquare = () => {
         if(utilsRef.current == 'square'){
             utilsRef.current = ''
-            window.removeEventListener('mousedown',createSquareHandle)
         }else{
-            setMouseCursor('default')
             utilsRef.current = 'square'
-            window.addEventListener('mousedown',createSquareHandle)
         }
-        // window.removeEventListener("mousedown", mousedownHandle)
-        // window.removeEventListener('mousedown', screenShotSizeUpdateStartHandle)
-        // window.removeEventListener('mousemove', screenShotSizeUpdateHandle)
-        // window.removeEventListener('mouseup', screenShotSizeUpdateEndHandle)
-        // window.removeEventListener('mouseup', mouseupHandle)
-
     }
-    useEffect(()=>{
-        if(utilsRef.current == ''){
-            Shape.canvas.style.cursor = 'move'
-        }else{
-            Shape.canvas.style.cursor = 'default'
-        }
-    },[utilsRef.current])
-
     const createSquareHandle = useCallback((e: MouseEvent) => {
         if (e.button !== 0) return;
         if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
         if (Shape.selectingShape) return;
-        const square = new Square(e.clientX,e.clientY)
+        new Square(e.clientX,e.clientY)
     },[])
 
+    const onDrawCircle = () => {
+        if(utilsRef.current == 'circle'){
+            utilsRef.current = ''
+        }else{
+            utilsRef.current = 'circle'
+        }
+    }
+    const createCircleHandle = useCallback((e: MouseEvent) => {
+        if (e.button !== 0) return;
+        if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
+        if (Shape.selectingShape) return;
+        new Circle(e.clientX,e.clientY)
+    },[])
+
+    useEffect(()=>{
+        window.removeEventListener('mousedown',createSquareHandle)
+        window.removeEventListener('mousedown',createCircleHandle)
+        if(utilsRef.current == ''){
+            Shape.canvas.style.cursor = 'move'
+        }else{
+            Shape.canvas.style.cursor = 'default'
+            setMouseCursor('default')
+            if(utilsRef.current == 'square'){
+                window.addEventListener('mousedown',createSquareHandle)
+            }else if(utilsRef.current == 'circle'){
+                window.addEventListener('mousedown',createCircleHandle)
+            }
+        }
+    },[utilsRef.current])
     const savePick = () => {
         const img = new Image()
         img.src = imgUrl
@@ -213,7 +226,7 @@ export default function Screenshot() {
             if (tempCtx) {
                 // 将原 Canvas 中的裁剪区域绘制到新的 Canvas 上
                 tempCtx.drawImage(img, startX, startY, width, height, 0, 0, width, height);
-
+                tempCtx.drawImage(Shape.canvas, 0, 0, width, height)
                 // 将新的 Canvas 转换为图片并下载
                 const croppedImageDataURL = tempCanvas.toDataURL('image/png');
                 const link = document.createElement('a');
@@ -232,6 +245,7 @@ export default function Screenshot() {
             <div className="screenshot">
                 <CropToolbar
                     onDrawSquare={onDrawSquare}
+                    onDrawCircle={onDrawCircle}
                     onCheck={savePick}
                     onQuit={closeWindowHandle}
                     active={utilsRef.current}

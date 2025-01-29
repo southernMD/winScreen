@@ -4,10 +4,11 @@
 import { Normal } from "./Normal";
 import { Point } from "./otherType";
 import { Square } from "./Square";
+import { Circle } from "./Circle";
 
 interface ShapeType {
     type: string
-    object: Square
+    object: Square | Circle;
 }
 
 let cursor = ''
@@ -25,8 +26,8 @@ export class Shape {
     private static mouseEvent: MouseEvent | null = null
     private static _selectingShape: null | ShapeType = null;
     private static selectingShapeUpdateStartMousePostion = {
-        x:0,
-        y:0
+        x: 0,
+        y: 0
     }
     // 使用 getter 和 setter 监视 selectingShape 的变化
     static get selectingShape(): null | ShapeType {
@@ -45,7 +46,7 @@ export class Shape {
         window.removeEventListener("mousedown", Shape.moveSelectingShapeStart)
         window.removeEventListener("mousemove", Shape.moveSelectingShapeNormalCursorStyle)
         if (newShape) {
-            if(this.isLeftMouseDown){
+            if (this.isLeftMouseDown) {
                 console.log("左键已经按下");
                 Shape.moveSelectingShapeStart(Shape.mouseEvent!)
             }
@@ -82,11 +83,11 @@ export class Shape {
                 return result;
             }
         });
-        window.addEventListener("mousedown",(e:MouseEvent)=>{
-            if(e.button === 0){
+        window.addEventListener("mousedown", (e: MouseEvent) => {
+            if (e.button === 0) {
                 Shape.mouseEvent = e
                 Shape.isLeftMouseDown = true
-            }else{
+            } else {
                 Shape.mouseEvent = null
                 Shape.isLeftMouseDown = false
             }
@@ -99,8 +100,8 @@ export class Shape {
         })
         //删除选中
         window.addEventListener("keydown", (e: KeyboardEvent) => {
-            if(e.code === 'Delete' || e.code === 'Backspace'){
-                if(Shape.selectingShape){
+            if (e.code === 'Delete' || e.code === 'Backspace') {
+                if (Shape.selectingShape) {
                     Shape.shapeList = Shape.shapeList.filter(item => item.object.id !== Shape.selectingShape!.object.id)
                     Shape.selectingShape = null
                     Shape.reDrawAllShape()
@@ -257,17 +258,19 @@ export class Shape {
         ctx.clearRect(0, 0, Shape.canvas!.width, Shape.canvas!.height);
         for (let i = 0; i < Shape.shapeList.length; i++) {
             const shape = Shape.shapeList[i].object
-            const normalShape = shape.getNormal()
-            ctx.strokeStyle = '#39C5BB';
-            ctx.lineWidth = 2;
-            const rectStartX = Math.min(normalShape.startX, normalShape.endX);
-            const rectStartY = Math.min(normalShape.startY, normalShape.endY);
-            const rectEndX = Math.max(normalShape.startX, normalShape.endX);
-            const rectEndY = Math.max(normalShape.startY, normalShape.endY);
-            const width = rectEndX - rectStartX;
-            const height = rectEndY - rectStartY;
-            ctx.strokeRect(rectStartX, rectStartY, width, height);
-            if (shape === Shape.selectingShape?.object) {
+            const shapeType = Shape.shapeList[i].type
+            if (shape !== Shape.selectingShape?.object) shape.drawRectangle()
+            else {
+                const normalShape = shape.getNormal()
+                ctx.strokeStyle = '#39C5BB';
+                ctx.lineWidth = 2;
+                const rectStartX = Math.min(normalShape.startX, normalShape.endX);
+                const rectStartY = Math.min(normalShape.startY, normalShape.endY);
+                const rectEndX = Math.max(normalShape.startX, normalShape.endX);
+                const rectEndY = Math.max(normalShape.startY, normalShape.endY);
+                const width = rectEndX - rectStartX;
+                const height = rectEndY - rectStartY;
+                ctx.strokeRect(rectStartX, rectStartY, width, height);
                 ctx.fillStyle = '#39C5BB';
                 const { topLeft, topMid, topRight, midLeft, midRight, bottomLeft, bottomMid, bottomRight } = normalShape.getPostionPoints()
                 ctx.fillRect(topLeft.x, topLeft.y, normalShape.squareSize, normalShape.squareSize);
@@ -278,11 +281,27 @@ export class Shape {
                 ctx.fillRect(bottomLeft.x, bottomLeft.y, normalShape.squareSize, normalShape.squareSize);
                 ctx.fillRect(bottomMid.x, bottomMid.y, normalShape.squareSize, normalShape.squareSize);
                 ctx.fillRect(bottomRight.x, bottomRight.y, normalShape.squareSize, normalShape.squareSize);
+                if (shapeType === 'square') { }
+                if (shapeType === 'circle') {
+                    const centerX = (normalShape.topMid.x + normalShape.bottomMid.x + normalShape.squareSize) / 2;
+                    const centerY = (normalShape.topMid.y + normalShape.bottomMid.y + normalShape.squareSize) / 2;
+                    const radiusX = Math.abs(normalShape.topMid.x - normalShape.midLeft.x);
+                    const radiusY = Math.abs(normalShape.topMid.y - normalShape.midRight.y);
+
+                    ctx.strokeStyle = '#39C5BB';
+                    ctx.lineWidth = 2
+                    ctx.beginPath();
+                    ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
+
+
             }
+
         }
     }
 
-    private static moveingNormalShape({ deltaX, deltaY }:{ deltaX: number, deltaY: number }) {
+    private static moveingNormalShape({ deltaX, deltaY }: { deltaX: number, deltaY: number }) {
         const _this = Shape.selectingShape?.object.getNormal()!
         // 获取 canvas 的宽度和高度
         const canvasWidth = Shape.canvasWidth
@@ -359,7 +378,7 @@ export class Shape {
         window.removeEventListener('mousemove', Shape.moveSelectingShapeNormalMoving)
         window.removeEventListener('mouseup', Shape.endSelectingShapeNormalMoving)
         const _this = Shape.selectingShape?.object.getNormal()!
-        if(cursor == 'default')return
+        if (cursor == 'default') return
         if (cursor.split('-')[0].length == 1) {
             if (cursor == 'n-resize' && _this.startY > _this.endY) {
                 Shape.moveSelectingShapeNormalMovingHandle(e, 's-resize')
@@ -485,9 +504,15 @@ export class Shape {
         }
         for (let i = 0; i < Shape.shapeList.length; i++) {
             const shape = Shape.shapeList[i]
-            if (shape.type === 'square' || shape.type === 'circle') {
-                const normal = (shape.object as Square).getNormal()
-                if (Shape.checkIfNormalBorderSelect(normal, e.offsetX, e.offsetY)) {
+            const normal = (shape.object as Square).getNormal()
+            if (shape.type === 'square') {
+                if (Shape.checkIfSquareBorderSelect(normal, e.offsetX, e.offsetY)) {
+                    Shape.selectingShape = shape
+                    Shape.reDrawAllShape()
+                    return
+                }
+            } else if (shape.type === 'circle') {
+                if (Shape.checkIfCircleBorderSelect(normal, e.offsetX, e.offsetY) || Shape.checkIfSquareBorderSelect(normal, e.offsetX, e.offsetY)) {
                     Shape.selectingShape = shape
                     Shape.reDrawAllShape()
                     return
@@ -498,7 +523,7 @@ export class Shape {
         Shape.reDrawAllShape()
     }
     //判断是否选中边框
-    private static checkIfNormalBorderSelect(normal: Normal, x: number, y: number): boolean {
+    private static checkIfSquareBorderSelect(normal: Normal, x: number, y: number): boolean {
         const { topLeft, topRight, bottomLeft, bottomRight, squareSize } = normal
         const clickPoint = { x, y }
         console.log(topLeft, topRight, bottomLeft, bottomRight, clickPoint);
@@ -528,9 +553,30 @@ export class Shape {
             isPointNearLine(topRight, bottomRight, clickPoint, squareSize)
         );
     }
+    private static checkIfCircleBorderSelect(normal: Normal, x: number, y: number): boolean {
+        // 计算椭圆的中心点
+        const centerX = (normal.startX + normal.endX) / 2;
+        const centerY = (normal.startY + normal.endY) / 2;
+
+        // 计算半长轴（a）和半短轴（b）
+        const a = Math.abs(normal.endX - normal.startX) / 2;
+        const b = Math.abs(normal.endY - normal.startY) / 2;
+
+        // 如果椭圆退化成一个点或者线，则返回 false
+        if (a === 0 || b === 0) return false;
+
+        // 计算点击点是否落在椭圆方程的范围内
+        const value = (Math.pow(x - centerX, 2) / Math.pow(a, 2)) + (Math.pow(y - centerY, 2) / Math.pow(b, 2));
+
+        // 设定一个误差范围（比如 ±2 像素）
+        const threshold = 0.5;
+
+        // 判断是否在边缘
+        return Math.abs(value - 1) < threshold;
+    }
 
     //重绘
-    private static reDrawAllShape() {
+    public static reDrawAllShape() {
         const ctx = Shape.canvas.getContext('2d')!
         ctx.clearRect(0, 0, Shape.canvas!.width, Shape.canvas!.height);
         for (let i = 0; i < Shape.shapeList.length; i++) {

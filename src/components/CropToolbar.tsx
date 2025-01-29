@@ -1,6 +1,9 @@
 /*
  * @Description: create by southernMD
  */
+/*
+ * @Description: create by southernMD
+ */
 import React from 'react';
 import {
     Check,
@@ -16,17 +19,18 @@ interface CropToolbarProps {
     onCheck?: () => void;
     onQuit?: () => void;
     onDrawSquare?: () => void;
+    onDrawCircle?: () => void;
     active?:'square' | 'circle' | 'pencil' | 'type' | '';
 }
 
-export const CropToolbar: React.FC<CropToolbarProps> = ({ onCheck,onQuit,onDrawSquare,active }) => {
+export const CropToolbar: React.FC<CropToolbarProps> = ({ onCheck,onQuit,onDrawSquare,onDrawCircle,active }) => {
     return (
         <div className={styles.toolbar}>
             <div className={styles.toolGroup}>
                 <button className={`${styles.toolButton} ${active === 'square' ? styles.active : ''}`} onClick={onDrawSquare}>
                     <Square size={20} />
                 </button>
-                <button className={`${styles.toolButton} ${active === 'circle' ? styles.active : ''}`}>
+                <button className={`${styles.toolButton} ${active === 'circle' ? styles.active : ''}`} onClick={onDrawCircle}>
                     <Circle size={20} />
                 </button>
                 <button className={`${styles.toolButton} ${active === 'pencil' ? styles.active : ''}`}>
