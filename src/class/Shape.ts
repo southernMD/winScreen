@@ -5,12 +5,9 @@ import { Normal } from "./Normal";
 import { Point } from "./otherType";
 import { Square } from "./Square";
 
-/*
- * @Description: create by southernMD
- */
 interface ShapeType {
     type: string
-    object: Square 
+    object: Square
 }
 
 let cursor = ''
@@ -24,7 +21,13 @@ export class Shape {
     static endX: number;
     static endY: number;
     static shapeList: ShapeType[] = [];
+    static isLeftMouseDown = false;
+    private static mouseEvent: MouseEvent | null = null
     private static _selectingShape: null | ShapeType = null;
+    private static selectingShapeUpdateStartMousePostion = {
+        x:0,
+        y:0
+    }
     // 使用 getter 和 setter 监视 selectingShape 的变化
     static get selectingShape(): null | ShapeType {
         return this._selectingShape;
@@ -39,16 +42,21 @@ export class Shape {
 
     private static handleSelectingShapeChange(newShape: ShapeType | null) {
         // 在 selectingShape 变化时执行的操作
+        window.removeEventListener("mousedown", Shape.moveSelectingShapeStart)
+        window.removeEventListener("mousemove", Shape.moveSelectingShapeNormalCursorStyle)
         if (newShape) {
-            window.addEventListener("mousedown",Shape.moveSelectingShapeStart)
-            if(Shape.selectingShape?.type === 'square'  || Shape.selectingShape?.type === 'circle'){
-                // window.removeEventListener("mousemove",Shape.moveSelectingShapeNormalCursorStyle)
-                window.addEventListener("mousemove",Shape.moveSelectingShapeNormalCursorStyle)
+            if(this.isLeftMouseDown){
+                console.log("左键已经按下");
+                Shape.moveSelectingShapeStart(Shape.mouseEvent!)
+            }
+            window.addEventListener("mousedown", Shape.moveSelectingShapeStart)
+            if (Shape.selectingShape?.type === 'square' || Shape.selectingShape?.type === 'circle') {
+                window.addEventListener("mousemove", Shape.moveSelectingShapeNormalCursorStyle)
             }
             console.log("新选中的形状:", newShape);
         } else {
-            window.removeEventListener("mousedown",Shape.moveSelectingShapeStart)
-            window.removeEventListener("mousemove",Shape.moveSelectingShapeNormalCursorStyle)
+            // window.removeEventListener("mousedown",Shape.moveSelectingShapeStart)
+            // window.removeEventListener("mousemove",Shape.moveSelectingShapeNormalCursorStyle)
             console.log("取消选中任何形状");
         }
         Shape.reDrawAllShape(); // 在变化时重绘所有形状
@@ -68,29 +76,59 @@ export class Shape {
                     } else if (target.length === 1) {
                         window.addEventListener('mousedown', Shape.mousedownHandler);
                     }
+                    console.log("当前的元素数量为", target.length);
+
                 }
                 return result;
             }
         });
-
+        window.addEventListener("mousedown",(e:MouseEvent)=>{
+            if(e.button === 0){
+                Shape.mouseEvent = e
+                Shape.isLeftMouseDown = true
+            }else{
+                Shape.mouseEvent = null
+                Shape.isLeftMouseDown = false
+            }
+        })
+        window.addEventListener("mouseup", (e: MouseEvent) => {
+            if (e.button === 0) {
+                Shape.mouseEvent = null
+                Shape.isLeftMouseDown = false
+            }
+        })
+        //删除选中
+        window.addEventListener("keydown", (e: KeyboardEvent) => {
+            if(e.code === 'Delete' || e.code === 'Backspace'){
+                if(Shape.selectingShape){
+                    Shape.shapeList = Shape.shapeList.filter(item => item.object.id !== Shape.selectingShape!.object.id)
+                    Shape.selectingShape = null
+                    Shape.reDrawAllShape()
+                }
+            }
+        })
     }
     //移动选中的元素
-    static moveSelectingShapeStart(e:MouseEvent){
-        if(e.button !== 0) return
-        if(!Shape.isInCanvas(e.clientX,e.clientY)) return
-        if(Shape.selectingShape?.type === 'square'  || Shape.selectingShape?.type === 'circle'){
-            console.log(Shape.selectingShape?.object.getNormal()!);
+    static moveSelectingShapeStart(e: MouseEvent) {
+        if (e.button !== 0) return
+        if (!Shape.isInCanvas(e.clientX, e.clientY)) return
+        console.log('移动选中的元素开始');
+        if (Shape.selectingShape?.type === 'square' || Shape.selectingShape?.type === 'circle') {
+            Shape.selectingShapeUpdateStartMousePostion = {
+                x: e.offsetX,
+                y: e.offsetY
+            }
             cursor = Shape.canvas.style.cursor
-            window.addEventListener("mousemove",Shape.moveSelectingShapeNormalMoving)
+            window.addEventListener("mousemove", Shape.moveSelectingShapeNormalMoving)
+            window.addEventListener("mouseup", Shape.endSelectingShapeNormalMoving)
         }
 
     }
     //normal鼠标移动中
-    private static moveSelectingShapeNormalMoving(e:MouseEvent){
-        Shape.moveSelectingShapeNormalMovingHandle(e,cursor)
-        window.addEventListener("mouseup",Shape.endSelectingShapeNormalMoving)
+    private static moveSelectingShapeNormalMoving(e: MouseEvent) {
+        Shape.moveSelectingShapeNormalMovingHandle(e, cursor)
     }
-    private static moveSelectingShapeNormalMovingHandle(e:MouseEvent,cursor:string){
+    private static moveSelectingShapeNormalMovingHandle(e: MouseEvent, cursor: string) {
         const _this = Shape.selectingShape?.object.getNormal()!
         const x = e.clientX - Shape.startX
         const y = e.clientY - Shape.startY
@@ -114,13 +152,14 @@ export class Shape {
 
         switch (cursor) {
             case 'nw-resize':
+                console.log(_this.bottomRight);
                 _this.startX = x
                 _this.startY = y
                 _this.endX = _this.bottomRight.x + _this.squareSize / 2
                 _this.endY = _this.bottomRight.y + _this.squareSize / 2
                 for (const [key, value] of Object.entries(points)) {
-                    if(!['bottomRight'].includes(key)){
-                        (_this as any)[key] = value; 
+                    if (!['bottomRight'].includes(key)) {
+                        (_this as any)[key] = value;
                     }
                 }
                 break
@@ -130,8 +169,8 @@ export class Shape {
                 _this.endX = _this.bottomLeft.x + _this.squareSize / 2
                 _this.endY = _this.bottomLeft.y + _this.squareSize / 2
                 for (const [key, value] of Object.entries(points)) {
-                    if(!['bottomLeft'].includes(key)){
-                        (_this as any)[key] = value; 
+                    if (!['bottomLeft'].includes(key)) {
+                        (_this as any)[key] = value;
                     }
                 }
                 break
@@ -141,8 +180,8 @@ export class Shape {
                 _this.endX = _this.topRight.x + _this.squareSize / 2
                 _this.endY = _this.topRight.y + _this.squareSize / 2
                 for (const [key, value] of Object.entries(points)) {
-                    if(!['topRight'].includes(key)){
-                        (_this as any)[key] = value; 
+                    if (!['topRight'].includes(key)) {
+                        (_this as any)[key] = value;
                     }
                 }
                 break
@@ -152,8 +191,8 @@ export class Shape {
                 _this.endX = _this.topLeft.x + _this.squareSize / 2
                 _this.endY = _this.topLeft.y + _this.squareSize / 2
                 for (const [key, value] of Object.entries(points)) {
-                    if(!['topLeft'].includes(key)){
-                        (_this as any)[key] = value; 
+                    if (!['topLeft'].includes(key)) {
+                        (_this as any)[key] = value;
                     }
                 }
                 break
@@ -163,7 +202,7 @@ export class Shape {
                 _this.endX = _this.bottomRight.x + _this.squareSize / 2
                 _this.endY = _this.bottomRight.y + _this.squareSize / 2
                 for (const [key, value] of Object.entries(points)) {
-                    if(!['bottomLeft', 'bottomMid', 'bottomRight'].includes(key)){
+                    if (!['bottomLeft', 'bottomMid', 'bottomRight'].includes(key)) {
                         (_this as any)[key] = { x: (_this as any)[key].x, y: value.y };
                     }
                 }
@@ -174,7 +213,7 @@ export class Shape {
                 _this.endX = _this.topLeft.x + _this.squareSize / 2
                 _this.endY = _this.topLeft.y + _this.squareSize / 2
                 for (const [key, value] of Object.entries(points)) {
-                    if(!['topLeft', 'topMid', 'topRight'].includes(key)){
+                    if (!['topLeft', 'topMid', 'topRight'].includes(key)) {
                         (_this as any)[key] = { x: (_this as any)[key].x, y: value.y };
                     }
                 }
@@ -185,7 +224,7 @@ export class Shape {
                 _this.endX = _this.bottomRight.x + _this.squareSize / 2
                 _this.endY = _this.bottomRight.y + _this.squareSize / 2
                 for (const [key, value] of Object.entries(points)) {
-                    if(!['topRight', 'bottomRight', 'midRight'].includes(key)){
+                    if (!['topRight', 'bottomRight', 'midRight'].includes(key)) {
                         (_this as any)[key] = { x: value.x, y: (_this as any)[key].y };
                     }
                 }
@@ -196,60 +235,161 @@ export class Shape {
                 _this.endX = _this.bottomLeft.x + _this.squareSize / 2
                 _this.endY = _this.bottomLeft.y + _this.squareSize / 2
                 for (const [key, value] of Object.entries(points)) {
-                    if(!['topLeft', 'bottomLeft', 'midLeft'].includes(key)){
+                    if (!['topLeft', 'bottomLeft', 'midLeft'].includes(key)) {
                         (_this as any)[key] = { x: value.x, y: (_this as any)[key].y };
                     }
                 }
                 break
-            
-            // case 'move':
-            //     // 计算鼠标的移动位移
-            //     const deltaX = x - this.screenShotSizeUpdateStartMousePostion.x;
-            //     const deltaY = y - this.screenShotSizeUpdateStartMousePostion.y;
-            //     this.screenShotSizeUpdateStartMousePostion = {
-            //         x,y
-            //     }
-            //     this.screenMove({deltaX,deltaY})
-            //     break;
+
+            case 'default':
+                // 计算鼠标的移动位移
+                const deltaX = x - Shape.selectingShapeUpdateStartMousePostion.x;
+                const deltaY = y - Shape.selectingShapeUpdateStartMousePostion.y;
+                Shape.selectingShapeUpdateStartMousePostion = {
+                    x, y
+                }
+                Shape.moveingNormalShape({ deltaX, deltaY })
+                break;
         }
 
-        Shape.reDrawAllShape()
+        // Shape.reDrawAllShape()
+        const ctx = Shape.canvas.getContext('2d')!
+        ctx.clearRect(0, 0, Shape.canvas!.width, Shape.canvas!.height);
+        for (let i = 0; i < Shape.shapeList.length; i++) {
+            const shape = Shape.shapeList[i].object
+            const normalShape = shape.getNormal()
+            ctx.strokeStyle = '#39C5BB';
+            ctx.lineWidth = 2;
+            const rectStartX = Math.min(normalShape.startX, normalShape.endX);
+            const rectStartY = Math.min(normalShape.startY, normalShape.endY);
+            const rectEndX = Math.max(normalShape.startX, normalShape.endX);
+            const rectEndY = Math.max(normalShape.startY, normalShape.endY);
+            const width = rectEndX - rectStartX;
+            const height = rectEndY - rectStartY;
+            ctx.strokeRect(rectStartX, rectStartY, width, height);
+            if (shape === Shape.selectingShape?.object) {
+                ctx.fillStyle = '#39C5BB';
+                const { topLeft, topMid, topRight, midLeft, midRight, bottomLeft, bottomMid, bottomRight } = normalShape.getPostionPoints()
+                ctx.fillRect(topLeft.x, topLeft.y, normalShape.squareSize, normalShape.squareSize);
+                ctx.fillRect(topMid.x, topMid.y, normalShape.squareSize, normalShape.squareSize);
+                ctx.fillRect(topRight.x, topRight.y, normalShape.squareSize, normalShape.squareSize);
+                ctx.fillRect(midLeft.x, midLeft.y, normalShape.squareSize, normalShape.squareSize);
+                ctx.fillRect(midRight.x, midRight.y, normalShape.squareSize, normalShape.squareSize);
+                ctx.fillRect(bottomLeft.x, bottomLeft.y, normalShape.squareSize, normalShape.squareSize);
+                ctx.fillRect(bottomMid.x, bottomMid.y, normalShape.squareSize, normalShape.squareSize);
+                ctx.fillRect(bottomRight.x, bottomRight.y, normalShape.squareSize, normalShape.squareSize);
+            }
+        }
     }
 
-    private static endSelectingShapeNormalMoving(e:MouseEvent){
+    private static moveingNormalShape({ deltaX, deltaY }:{ deltaX: number, deltaY: number }) {
+        const _this = Shape.selectingShape?.object.getNormal()!
+        // 获取 canvas 的宽度和高度
+        const canvasWidth = Shape.canvasWidth
+        const canvasHeight = Shape.canvasHeight;
+
+        // 矫正位移，使得矩形不会超出画布范围
+        let correctedDeltaX = deltaX;
+        let correctedDeltaY = deltaY;
+
+        // 判断左上角与右下角是否超出边界
+        const rectStartX = Math.min(_this.startX + deltaX, _this.endX + deltaX);
+        const rectStartY = Math.min(_this.startY + deltaY, _this.endY + deltaY);
+        const rectEndX = Math.max(_this.startX + deltaX, _this.endX + deltaX);
+        const rectEndY = Math.max(_this.startY + deltaY, _this.endY + deltaY);
+
+        // 矫正 deltaX
+        if (rectStartX < 0) {
+            correctedDeltaX = correctedDeltaX - rectStartX;
+        }
+        if (rectEndX > canvasWidth) {
+            correctedDeltaX = correctedDeltaX - (rectEndX - canvasWidth);
+        }
+
+        // 矫正 deltaY
+        if (rectStartY < 0) {
+            correctedDeltaY = correctedDeltaY - rectStartY;
+        }
+        if (rectEndY > canvasHeight) {
+            correctedDeltaY = correctedDeltaY - (rectEndY - canvasHeight);
+        }
+
+        // 更新矩形的起点和终点坐标
+        _this.startX += correctedDeltaX;
+        _this.startY += correctedDeltaY;
+        _this.endX += correctedDeltaX;
+        _this.endY += correctedDeltaY;
+
+        // 更新四角和中间点的坐标
+        const points = [
+            _this.topLeft,
+            _this.topRight,
+            _this.bottomLeft,
+            _this.bottomRight,
+            _this.topMid,
+            _this.bottomMid,
+            _this.midLeft,
+            _this.midRight,
+        ];
+        points.forEach((point) => {
+            point.x += correctedDeltaX;
+            point.y += correctedDeltaY;
+        });
+
+        // const ctx = this.canvas!.getContext('2d')!;
+
+        // ctx.clearRect(0, 0, this.canvas!.width, this.canvas!.height);
+
+        // // 计算矩形的宽度和高度
+        // const width = Math.abs(this.endX - this.startX);
+        // const height = Math.abs(this.endY - this.startY);
+        // const rectX = Math.min(this.startX, this.endX);
+        // const rectY = Math.min(this.startY, this.endY);
+
+        // ctx.strokeStyle = '#39C5BB';
+        // ctx.lineWidth = 2;
+        // ctx.strokeRect(rectX, rectY, width, height);
+
+        // ctx.fillStyle = '#39C5BB';
+        // this.draw(ctx);
+    }
+
+    private static endSelectingShapeNormalMoving(e: MouseEvent) {
         Shape.reDrawAllShape()
-        window.removeEventListener('mousemove',Shape.endSelectingShapeNormalMoving)
-        // const _this = Shape.selectingShape?.object.getNormal()!
-        // if (cursor.split('-')[0].length == 1) {
-        //     if (cursor == 'n-resize' && _this.startY > _this.endY) {
-        //         this.moveSelectingShapeNormalMovingHandle(e, 's-resize')
-        //     } else if (cursor == 's-resize' && _this.startY <= _this.endY) {
-        //         this.moveSelectingShapeNormalMovingHandle(e, 'n-resize')
-        //     } else if (cursor == 'w-resize' && _this.startX > _this.endX) {
-        //         this.moveSelectingShapeNormalMovingHandle(e, 'e-resize')
-        //     } else if (cursor == 'e-resize' && _this.startX <= _this.endX) {
-        //         this.moveSelectingShapeNormalMovingHandle(e, 'w-resize')
-        //     }
-        // } else {
-        //     if (_this.startX > _this.endX && _this.startY < _this.endY) {
-        //         this.moveSelectingShapeNormalMovingHandle(e, 'ne-resize')
-        //     } else if (_this.startX < _this.endX && _this.startY > _this.endY) {
-        //         this.moveSelectingShapeNormalMovingHandle(e, 'sw-resize')
-        //     } else if (_this.startX > _this.endX && _this.startY > _this.endY) {
-        //         this.moveSelectingShapeNormalMovingHandle(e, 'se-resize')
-        //     } else if (_this.startX < _this.endX && _this.startY < _this.endY) {
-        //         this.moveSelectingShapeNormalMovingHandle(e, 'nw-resize')
-        //     }
-        // }
+        window.removeEventListener('mousemove', Shape.moveSelectingShapeNormalMoving)
+        window.removeEventListener('mouseup', Shape.endSelectingShapeNormalMoving)
+        const _this = Shape.selectingShape?.object.getNormal()!
+        if(cursor == 'default')return
+        if (cursor.split('-')[0].length == 1) {
+            if (cursor == 'n-resize' && _this.startY > _this.endY) {
+                Shape.moveSelectingShapeNormalMovingHandle(e, 's-resize')
+            } else if (cursor == 's-resize' && _this.startY <= _this.endY) {
+                Shape.moveSelectingShapeNormalMovingHandle(e, 'n-resize')
+            } else if (cursor == 'w-resize' && _this.startX > _this.endX) {
+                Shape.moveSelectingShapeNormalMovingHandle(e, 'e-resize')
+            } else if (cursor == 'e-resize' && _this.startX <= _this.endX) {
+                Shape.moveSelectingShapeNormalMovingHandle(e, 'w-resize')
+            }
+        } else {
+            if (_this.startX > _this.endX && _this.startY < _this.endY) {
+                Shape.moveSelectingShapeNormalMovingHandle(e, 'ne-resize')
+            } else if (_this.startX < _this.endX && _this.startY > _this.endY) {
+                Shape.moveSelectingShapeNormalMovingHandle(e, 'sw-resize')
+            } else if (_this.startX > _this.endX && _this.startY > _this.endY) {
+                Shape.moveSelectingShapeNormalMovingHandle(e, 'se-resize')
+            } else if (_this.startX < _this.endX && _this.startY < _this.endY) {
+                Shape.moveSelectingShapeNormalMovingHandle(e, 'nw-resize')
+            }
+        }
     }
     //当选中后需要更具条件修改鼠标样式
-    private static moveSelectingShapeNormalCursorStyle(e:MouseEvent){
-        Shape.canvas.style.cursor = Shape.checkNormalPointCursorStyle({x:e.offsetX,y:e.offsetY},Shape.selectingShape?.object.getNormal()!)
+    private static moveSelectingShapeNormalCursorStyle(e: MouseEvent) {
+        Shape.canvas.style.cursor = Shape.checkNormalPointCursorStyle({ x: e.offsetX, y: e.offsetY }, Shape.selectingShape?.object.getNormal()!)
     }
 
-    private static checkNormalPointCursorStyle({x,y}:Point,{topLeft,topMid,topRight,midLeft,midRight,bottomLeft,bottomMid,bottomRight,squareSize}:Normal){
-         // 检查是否在 topLeft 点范围内
-         if (x >= topLeft.x - squareSize / 2 && x <= topLeft.x + squareSize / 2 &&
+    private static checkNormalPointCursorStyle({ x, y }: Point, { topLeft, topMid, topRight, midLeft, midRight, bottomLeft, bottomMid, bottomRight, squareSize }: Normal) {
+        // 检查是否在 topLeft 点范围内
+        if (x >= topLeft.x - squareSize / 2 && x <= topLeft.x + squareSize / 2 &&
             y >= topLeft.y - squareSize / 2 && y <= topLeft.y + squareSize / 2) {
             return 'nw-resize';
         }
@@ -337,7 +477,12 @@ export class Shape {
     //选中元素事件
     private static mousedownHandler = (e: MouseEvent) => {
         if (e.button !== 0) return
-        if (!Shape.isInCanvas(e.clientX, e.clientY)) return
+        if (!Shape.isInCanvas(e.clientX, e.clientY)) {
+            if (Shape.selectingShape) {
+                Shape.selectingShape = null
+            }
+            return
+        }
         for (let i = 0; i < Shape.shapeList.length; i++) {
             const shape = Shape.shapeList[i]
             if (shape.type === 'square' || shape.type === 'circle') {
@@ -382,14 +527,6 @@ export class Shape {
             isPointNearLine(topLeft, bottomLeft, clickPoint, squareSize) ||
             isPointNearLine(topRight, bottomRight, clickPoint, squareSize)
         );
-        // if(normal.topLeft.x <= e.clientX && normal.topLeft.x + normal.squareSize >= e.clientX &&
-        //     normal.topLeft.y <= e.clientY && normal.topLeft.y + normal.squareSize >= e.clientY){
-        //         console.log('选中了');
-        //         return true
-        //     }else{
-        //         Shape.ifSelectFnActive = false
-        //         return false
-        //     }
     }
 
     //重绘

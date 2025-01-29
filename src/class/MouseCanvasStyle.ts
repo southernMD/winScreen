@@ -41,7 +41,7 @@ export class MouseCanvasStyle {
     //     this.onCursorStyleChange = callback
     // }
     //type = 0 默认 type = 1 y固定 type = 2 x 固定
-    private drawRectangle = (tips: string[] = [], type = 0) => {
+    public drawRectangle = (tips: string[] = [], type = 0) => {
         const ctx = this.canvas!.getContext('2d')!;
         // 清除之前的矩形
         ctx.clearRect(0, 0, this.canvas!.width, this.canvas!.height);

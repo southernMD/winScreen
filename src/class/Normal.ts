@@ -18,4 +18,16 @@ export class Normal {
     bottomLeft: Point = { x: 0, y: 0 };
     bottomMid: Point = { x: 0, y: 0 };
     bottomRight: Point = { x: 0, y: 0 };
+    public getPostionPoints() {
+        return {
+            topLeft: this.topLeft,
+            topMid: this.topMid,
+            topRight: this.topRight,
+            midLeft: this.midLeft,
+            midRight: this.midRight,
+            bottomLeft: this.bottomLeft,
+            bottomMid: this.bottomMid,
+            bottomRight: this.bottomRight,
+        }
+    }
 }

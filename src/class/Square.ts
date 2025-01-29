@@ -1,6 +1,9 @@
 /*
  * @Description: create by southernMD
  */
+/*
+ * @Description: create by southernMD
+ */
 
 import { Normal } from "./Normal";
 import { Point } from "./otherType";
@@ -18,6 +21,11 @@ export class Square extends Shape {
         window.addEventListener("mouseup", this.endDrawSquare)
     }
     drawSquare = (e: MouseEvent) => {
+        if(Shape.selectingShape){
+            window.removeEventListener("mousemove", this.drawSquare)
+            window.removeEventListener("mouseup", this.endDrawSquare)
+            return
+        }
         this.normal.endX = Math.min(Math.max(e.clientX - Shape.startX, 0), Shape.canvasWidth);
         this.normal.endY = Math.min(Math.max(e.clientY - Shape.startY, 0), Shape.canvasHeight);
         const ctx = Shape.canvas.getContext('2d')!
@@ -28,6 +36,10 @@ export class Square extends Shape {
         }
     }
     endDrawSquare = (e: MouseEvent) => {
+        window.removeEventListener("mousemove", this.drawSquare)
+        window.removeEventListener("mouseup", this.endDrawSquare)
+        if(Math.abs(this.normal.startX - (e.clientX - Shape.startX)) < 2 && Math.abs(this.normal.startY - (e.clientY - Shape.startY)) < 2) return
+        if(this.normal.startX == this.normal.endX && this.normal.startY == this.normal.endY) return
         this.normal.endX = Math.min(Math.max(e.clientX - Shape.startX, 0), Shape.canvasWidth);
         this.normal.endY = Math.min(Math.max(e.clientY - Shape.startY, 0), Shape.canvasHeight);
         Shape.shapeList.push({
@@ -39,8 +51,6 @@ export class Square extends Shape {
         for(let i=0;i<Shape.shapeList.length;i++){
             Shape.shapeList[i].object.drawRectangle()
         }
-        window.removeEventListener("mousemove", this.drawSquare)
-        window.removeEventListener("mouseup", this.endDrawSquare)
     }
 
     public drawRectangle(tips: string[] = [], type = 0) {
