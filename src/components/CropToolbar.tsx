@@ -1,9 +1,7 @@
 /*
  * @Description: create by southernMD
  */
-/*
- * @Description: create by southernMD
- */
+
 import React from 'react';
 import {
     Check,
@@ -20,10 +18,11 @@ interface CropToolbarProps {
     onQuit?: () => void;
     onDrawSquare?: () => void;
     onDrawCircle?: () => void;
-    active?:'square' | 'circle' | 'pencil' | 'type' | '';
+    onDraw: () => void;
+    active?:'square' | 'circle' | 'pencil' | 'font' | '';
 }
 
-export const CropToolbar: React.FC<CropToolbarProps> = ({ onCheck,onQuit,onDrawSquare,onDrawCircle,active }) => {
+export const CropToolbar: React.FC<CropToolbarProps> = ({ onCheck,onQuit,onDrawSquare,onDrawCircle,onDraw,active }) => {
     return (
         <div className={styles.toolbar}>
             <div className={styles.toolGroup}>
@@ -33,10 +32,10 @@ export const CropToolbar: React.FC<CropToolbarProps> = ({ onCheck,onQuit,onDrawS
                 <button className={`${styles.toolButton} ${active === 'circle' ? styles.active : ''}`} onClick={onDrawCircle}>
                     <Circle size={20} />
                 </button>
-                <button className={`${styles.toolButton} ${active === 'pencil' ? styles.active : ''}`}>
+                <button className={`${styles.toolButton} ${active === 'pencil' ? styles.active : ''}`} onClick={onDraw}>
                     <Pencil size={20} />
                 </button>
-                <button className={`${styles.toolButton} ${active === 'type' ? styles.active : ''}`}>
+                <button className={`${styles.toolButton} ${active === 'font' ? styles.active : ''}`}>
                     <Type size={20} />
                 </button>
                 <button className={styles.toolButton} onClick={onQuit}>

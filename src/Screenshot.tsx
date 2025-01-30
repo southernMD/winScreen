@@ -1,6 +1,7 @@
 /*
  * @Description: create by southernMD
  */
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import './assets/css/Screenshot.css'
 import { MouseCanvasStyle } from "./class/MouseCanvasStyle";
@@ -8,11 +9,12 @@ import { CropToolbar } from "./components/CropToolbar";
 import { Square } from './class/Square'
 import { Shape } from './class/Shape'
 import { Circle } from "./class/Circle";
+import { Pencil } from "./class/Pencil";
 
 export default function Screenshot() {
     const [imgUrl, setImgUrl] = useState('')
     const [mouseCursor, setMouseCursor] = useState('default')
-    const utilsRef = useRef<"" | "square" | "circle" | "pencil" | "type" | undefined>("");
+    const utilsRef = useRef<"" | "square" | "circle" | "pencil" | "font" | undefined>("");
     const mouseCursorRef = useRef('default');
     let fixedMouseCursor = 'default'
     useEffect(() => {
@@ -55,7 +57,7 @@ export default function Screenshot() {
         console.log(e.target);
         if (!(e.target instanceof HTMLCanvasElement)) return;
         if (e.button !== 0) return;
-        if (Shape.selectingShape) return
+        Shape.selectingShape = null
         fixedMouseCursor = mouseCursorRef.current;
         mouseCanvasCtxRef.current!.screenShotSizeUpdateStartMousePostion.x = e.clientX;
         mouseCanvasCtxRef.current!.screenShotSizeUpdateStartMousePostion.y = e.clientY;
@@ -187,6 +189,7 @@ export default function Screenshot() {
             utilsRef.current = 'circle'
         }
     }
+
     const createCircleHandle = useCallback((e: MouseEvent) => {
         if (e.button !== 0) return;
         if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
@@ -194,9 +197,25 @@ export default function Screenshot() {
         new Circle(e.clientX,e.clientY)
     },[])
 
+    const onDraw = () => {
+        if(utilsRef.current == 'pencil'){
+            utilsRef.current = ''
+        }else{
+            utilsRef.current = 'pencil'
+        }
+    }
+
+    const createPencilHandle = useCallback((e: MouseEvent) => {
+        if (e.button !== 0) return;
+        if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
+        if (Shape.selectingShape) return;
+        new Pencil(e.clientX,e.clientY)
+    },[])
+
     useEffect(()=>{
         window.removeEventListener('mousedown',createSquareHandle)
         window.removeEventListener('mousedown',createCircleHandle)
+        window.removeEventListener('mousedown',createPencilHandle)
         if(utilsRef.current == ''){
             Shape.canvas.style.cursor = 'move'
         }else{
@@ -206,6 +225,8 @@ export default function Screenshot() {
                 window.addEventListener('mousedown',createSquareHandle)
             }else if(utilsRef.current == 'circle'){
                 window.addEventListener('mousedown',createCircleHandle)
+            }else if(utilsRef.current == 'pencil'){
+                window.addEventListener('mousedown',createPencilHandle)
             }
         }
     },[utilsRef.current])
@@ -240,12 +261,15 @@ export default function Screenshot() {
 
     }
 
+
+
     return (
         <>
             <div className="screenshot">
                 <CropToolbar
                     onDrawSquare={onDrawSquare}
                     onDrawCircle={onDrawCircle}
+                    onDraw={onDraw}
                     onCheck={savePick}
                     onQuit={closeWindowHandle}
                     active={utilsRef.current}

@@ -1,3 +1,5 @@
+import { Shape } from "./Shape"
+
 /*
  * @Description: create by southernMD
  */
@@ -322,6 +324,7 @@ export class MouseCanvasStyle {
         }
     }
     private screenMove = ({ deltaX, deltaY }: { deltaX: number; deltaY: number }) => {
+        if(Shape.selectingShape)return
         // 获取 canvas 的宽度和高度
         const canvasWidth = this.canvas!.width;
         const canvasHeight = this.canvas!.height;

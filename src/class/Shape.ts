@@ -5,10 +5,11 @@ import { Normal } from "./Normal";
 import { Point } from "./otherType";
 import { Square } from "./Square";
 import { Circle } from "./Circle";
+import { Pencil } from "./Pencil";
 
 interface ShapeType {
-    type: string
-    object: Square | Circle;
+    type: 'square' | 'circle' | 'pencil'
+    object: Square | Circle | Pencil
 }
 
 let cursor = ''
@@ -122,6 +123,14 @@ export class Shape {
             cursor = Shape.canvas.style.cursor
             window.addEventListener("mousemove", Shape.moveSelectingShapeNormalMoving)
             window.addEventListener("mouseup", Shape.endSelectingShapeNormalMoving)
+        } else if (Shape.selectingShape?.type === 'pencil') {
+            Shape.canvas.style.cursor= 'move'
+            Shape.selectingShapeUpdateStartMousePostion = {
+                x: e.offsetX,
+                y: e.offsetY
+            }
+            window.addEventListener("mousemove", Shape.moveSelectingShapeLineMoving)
+            window.addEventListener("mouseup", Shape.endSelectingShapeLineMoving)
         }
 
     }
@@ -130,7 +139,7 @@ export class Shape {
         Shape.moveSelectingShapeNormalMovingHandle(e, cursor)
     }
     private static moveSelectingShapeNormalMovingHandle(e: MouseEvent, cursor: string) {
-        const _this = Shape.selectingShape?.object.getNormal()!
+        const _this = (Shape.selectingShape?.object as Circle | Square).getNormal()!
         const x = e.clientX - Shape.startX
         const y = e.clientY - Shape.startY
 
@@ -261,7 +270,7 @@ export class Shape {
             const shapeType = Shape.shapeList[i].type
             if (shape !== Shape.selectingShape?.object) shape.drawRectangle()
             else {
-                const normalShape = shape.getNormal()
+                const normalShape = (shape as Circle | Square).getNormal()
                 ctx.strokeStyle = '#39C5BB';
                 ctx.lineWidth = 2;
                 const rectStartX = Math.min(normalShape.startX, normalShape.endX);
@@ -300,9 +309,8 @@ export class Shape {
 
         }
     }
-
     private static moveingNormalShape({ deltaX, deltaY }: { deltaX: number, deltaY: number }) {
-        const _this = Shape.selectingShape?.object.getNormal()!
+        const _this = (Shape.selectingShape?.object as Circle | Square).getNormal()!
         // 获取 canvas 的宽度和高度
         const canvasWidth = Shape.canvasWidth
         const canvasHeight = Shape.canvasHeight;
@@ -372,12 +380,11 @@ export class Shape {
         // ctx.fillStyle = '#39C5BB';
         // this.draw(ctx);
     }
-
     private static endSelectingShapeNormalMoving(e: MouseEvent) {
         Shape.reDrawAllShape()
         window.removeEventListener('mousemove', Shape.moveSelectingShapeNormalMoving)
         window.removeEventListener('mouseup', Shape.endSelectingShapeNormalMoving)
-        const _this = Shape.selectingShape?.object.getNormal()!
+        const _this = (Shape.selectingShape?.object as Circle | Square).getNormal()!
         if (cursor == 'default') return
         if (cursor.split('-')[0].length == 1) {
             if (cursor == 'n-resize' && _this.startY > _this.endY) {
@@ -401,9 +408,36 @@ export class Shape {
             }
         }
     }
+
+    //线移动
+    private static moveSelectingShapeLineMoving(e:MouseEvent){
+        
+        const deltaX = e.clientX - Shape.startX - Shape.selectingShapeUpdateStartMousePostion.x;
+        const deltaY = e.clientY - Shape.startY - Shape.selectingShapeUpdateStartMousePostion.y;
+        const shape = Shape.selectingShape?.object as Pencil
+        for(let i = 0;i<shape.getPoints().length;i++){
+            const point = shape.getPoints()[i]
+            point.x += deltaX
+            point.y += deltaY
+        }
+        Shape.selectingShapeUpdateStartMousePostion = {
+            x: e.clientX - Shape.startX,
+            y: e.clientY - Shape.startY
+        }
+        Shape.reDrawAllShape()
+    }
+    private static endSelectingShapeLineMoving(e:MouseEvent){
+        Shape.reDrawAllShape()
+        Shape.canvas.style.cursor = 'default'
+        // Shape.selectingShape = null
+        window.removeEventListener('mousemove', Shape.moveSelectingShapeLineMoving)
+        window.removeEventListener('mouseup', Shape.endSelectingShapeLineMoving)
+
+    }
+    
     //当选中后需要更具条件修改鼠标样式
     private static moveSelectingShapeNormalCursorStyle(e: MouseEvent) {
-        Shape.canvas.style.cursor = Shape.checkNormalPointCursorStyle({ x: e.offsetX, y: e.offsetY }, Shape.selectingShape?.object.getNormal()!)
+        Shape.canvas.style.cursor = Shape.checkNormalPointCursorStyle({ x: e.offsetX, y: e.offsetY }, (Shape.selectingShape?.object as Circle | Square).getNormal()!)
     }
 
     private static checkNormalPointCursorStyle({ x, y }: Point, { topLeft, topMid, topRight, midLeft, midRight, bottomLeft, bottomMid, bottomRight, squareSize }: Normal) {
@@ -504,15 +538,22 @@ export class Shape {
         }
         for (let i = 0; i < Shape.shapeList.length; i++) {
             const shape = Shape.shapeList[i]
-            const normal = (shape.object as Square).getNormal()
             if (shape.type === 'square') {
+                const normal = (shape.object as Square).getNormal()
                 if (Shape.checkIfSquareBorderSelect(normal, e.offsetX, e.offsetY)) {
                     Shape.selectingShape = shape
                     Shape.reDrawAllShape()
                     return
                 }
             } else if (shape.type === 'circle') {
+                const normal = (shape.object as Circle).getNormal()
                 if (Shape.checkIfCircleBorderSelect(normal, e.offsetX, e.offsetY) || Shape.checkIfSquareBorderSelect(normal, e.offsetX, e.offsetY)) {
+                    Shape.selectingShape = shape
+                    Shape.reDrawAllShape()
+                    return
+                }
+            } else if (shape.type === 'pencil') {
+                if (Shape.checkIfLineSelect(shape.object as Pencil, e.offsetX, e.offsetY)) {
                     Shape.selectingShape = shape
                     Shape.reDrawAllShape()
                     return
@@ -553,6 +594,7 @@ export class Shape {
             isPointNearLine(topRight, bottomRight, clickPoint, squareSize)
         );
     }
+    //判断是否在圆边上
     private static checkIfCircleBorderSelect(normal: Normal, x: number, y: number): boolean {
         // 计算椭圆的中心点
         const centerX = (normal.startX + normal.endX) / 2;
@@ -573,6 +615,56 @@ export class Shape {
 
         // 判断是否在边缘
         return Math.abs(value - 1) < threshold;
+    }
+    //判断是否在画的线上
+    private static checkIfLineSelect(line: Pencil, x: number, y: number): boolean {
+        const points = line.getPoints();
+        const lineWidth = line.lineWidth ; // 允许的误差范围（半径）
+
+        for (let i = 0; i < points.length - 1; i++) {
+            const p1 = points[i];
+            const p2 = points[i + 1];
+
+            // 计算点 (x, y) 到 线段 (p1, p2) 的最短距离
+            const distance = Shape.pointToSegmentDistance(x, y, p1.x, p1.y, p2.x, p2.y);
+
+            // 如果点到线段的距离小于笔触宽度的一半，认为点在线上
+            if (distance <= lineWidth) {
+                return true;
+            }
+        }
+        return false;
+    }
+    private static pointToSegmentDistance(px: number, py: number, x1: number, y1: number, x2: number, y2: number): number {
+        const A = px - x1;
+        const B = py - y1;
+        const C = x2 - x1;
+        const D = y2 - y1;
+
+        const dot = A * C + B * D;
+        const len_sq = C * C + D * D;
+        let param = len_sq !== 0 ? dot / len_sq : -1; // 计算投影参数
+
+        let closestX, closestY;
+
+        if (param < 0) {
+            // 投影点在 p1 之外，选择 p1
+            closestX = x1;
+            closestY = y1;
+        } else if (param > 1) {
+            // 投影点在 p2 之外，选择 p2
+            closestX = x2;
+            closestY = y2;
+        } else {
+            // 计算投影点
+            closestX = x1 + param * C;
+            closestY = y1 + param * D;
+        }
+
+        // 计算最近点与鼠标点击点的距离
+        const dx = px - closestX;
+        const dy = py - closestY;
+        return Math.sqrt(dx * dx + dy * dy);
     }
 
     //重绘
