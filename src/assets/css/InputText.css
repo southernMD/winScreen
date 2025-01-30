@@ -1,0 +1,8 @@
+input {
+    padding: 5px;
+    box-sizing: border-box;
+    resize: none;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 100%;
+}

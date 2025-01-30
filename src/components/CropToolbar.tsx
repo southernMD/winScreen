@@ -19,10 +19,11 @@ interface CropToolbarProps {
     onDrawSquare?: () => void;
     onDrawCircle?: () => void;
     onDraw: () => void;
+    onFont: () => void;
     active?:'square' | 'circle' | 'pencil' | 'font' | '';
 }
 
-export const CropToolbar: React.FC<CropToolbarProps> = ({ onCheck,onQuit,onDrawSquare,onDrawCircle,onDraw,active }) => {
+export const CropToolbar: React.FC<CropToolbarProps> = ({ onCheck,onQuit,onDrawSquare,onDrawCircle,onDraw,onFont,active }) => {
     return (
         <div className={styles.toolbar}>
             <div className={styles.toolGroup}>
@@ -35,7 +36,7 @@ export const CropToolbar: React.FC<CropToolbarProps> = ({ onCheck,onQuit,onDrawS
                 <button className={`${styles.toolButton} ${active === 'pencil' ? styles.active : ''}`} onClick={onDraw}>
                     <Pencil size={20} />
                 </button>
-                <button className={`${styles.toolButton} ${active === 'font' ? styles.active : ''}`}>
+                <button className={`${styles.toolButton} ${active === 'font' ? styles.active : ''}`} onClick={onFont}>
                     <Type size={20} />
                 </button>
                 <button className={styles.toolButton} onClick={onQuit}>

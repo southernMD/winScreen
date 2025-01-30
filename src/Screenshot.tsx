@@ -10,6 +10,7 @@ import { Square } from './class/Square'
 import { Shape } from './class/Shape'
 import { Circle } from "./class/Circle";
 import { Pencil } from "./class/Pencil";
+import { Font } from "./class/Font";
 
 export default function Screenshot() {
     const [imgUrl, setImgUrl] = useState('')
@@ -212,10 +213,26 @@ export default function Screenshot() {
         new Pencil(e.clientX,e.clientY)
     },[])
 
+    const onFont = () => {
+        if(utilsRef.current == 'font'){
+            utilsRef.current = ''
+        }else{
+            utilsRef.current = 'font'
+        }
+    }
+
+    const createFontHandle = useCallback((e:MouseEvent)=>{
+        if (e.button !== 0) return;
+        if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
+        if (Shape.selectingShape) return;
+        new Font(e.clientX,e.clientY)
+    },[])
+
     useEffect(()=>{
         window.removeEventListener('mousedown',createSquareHandle)
         window.removeEventListener('mousedown',createCircleHandle)
         window.removeEventListener('mousedown',createPencilHandle)
+        window.removeEventListener('mousedown',createFontHandle)
         if(utilsRef.current == ''){
             Shape.canvas.style.cursor = 'move'
         }else{
@@ -227,6 +244,8 @@ export default function Screenshot() {
                 window.addEventListener('mousedown',createCircleHandle)
             }else if(utilsRef.current == 'pencil'){
                 window.addEventListener('mousedown',createPencilHandle)
+            }else if(utilsRef.current == 'font'){
+                window.addEventListener('mousedown',createFontHandle)
             }
         }
     },[utilsRef.current])
@@ -270,6 +289,7 @@ export default function Screenshot() {
                     onDrawSquare={onDrawSquare}
                     onDrawCircle={onDrawCircle}
                     onDraw={onDraw}
+                    onFont={onFont}
                     onCheck={savePick}
                     onQuit={closeWindowHandle}
                     active={utilsRef.current}
