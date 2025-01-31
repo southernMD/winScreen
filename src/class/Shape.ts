@@ -6,15 +6,16 @@ import { Point } from "./otherType";
 import { Square } from "./Square";
 import { Circle } from "./Circle";
 import { Pencil } from "./Pencil";
+import { Font } from "./Font";
 
 interface ShapeType {
-    type: 'square' | 'circle' | 'pencil'
-    object: Square | Circle | Pencil
+    type: 'square' | 'circle' | 'pencil' | 'font'
+    object: Square | Circle | Pencil | Font
 }
 
 let cursor = ''
 
-export class Shape {
+export abstract class Shape {
     static canvas: HTMLCanvasElement;
     static canvasWidth: number;
     static canvasHeight: number;
@@ -26,6 +27,9 @@ export class Shape {
     static isLeftMouseDown = false;
     private static mouseEvent: MouseEvent | null = null
     private static _selectingShape: null | ShapeType = null;
+
+    abstract drawRectangle(tips?: string[], type?: number): void;
+
     private static selectingShapeUpdateStartMousePostion = {
         x: 0,
         y: 0
@@ -46,6 +50,8 @@ export class Shape {
         // 在 selectingShape 变化时执行的操作
         window.removeEventListener("mousedown", Shape.moveSelectingShapeStart)
         window.removeEventListener("mousemove", Shape.moveSelectingShapeNormalCursorStyle)
+        window.removeEventListener("mousemove", Shape.moveSelectingShapeFontCursorStyle)
+        window.removeEventListener("dblclick",Shape.editText)
         if (newShape) {
             if (this.isLeftMouseDown) {
                 console.log("左键已经按下");
@@ -54,6 +60,9 @@ export class Shape {
             window.addEventListener("mousedown", Shape.moveSelectingShapeStart)
             if (Shape.selectingShape?.type === 'square' || Shape.selectingShape?.type === 'circle') {
                 window.addEventListener("mousemove", Shape.moveSelectingShapeNormalCursorStyle)
+            }else if(Shape.selectingShape?.type === 'font'){
+                window.addEventListener("mousemove", Shape.moveSelectingShapeFontCursorStyle)
+                window.addEventListener("dblclick",Shape.editText)
             }
             console.log("新选中的形状:", newShape);
         } else {
@@ -131,6 +140,14 @@ export class Shape {
             }
             window.addEventListener("mousemove", Shape.moveSelectingShapeLineMoving)
             window.addEventListener("mouseup", Shape.endSelectingShapeLineMoving)
+        } else if (Shape.selectingShape?.type === 'font') {
+            Shape.selectingShapeUpdateStartMousePostion = {
+                x: e.offsetX,
+                y: e.offsetY
+            }
+            cursor = Shape.canvas.style.cursor
+            window.addEventListener("mousemove", Shape.moveSelectingShapeFontMoving)
+            window.addEventListener("mouseup", Shape.endSelectingShapeFontMoving)
         }
 
     }
@@ -362,23 +379,6 @@ export class Shape {
             point.x += correctedDeltaX;
             point.y += correctedDeltaY;
         });
-
-        // const ctx = this.canvas!.getContext('2d')!;
-
-        // ctx.clearRect(0, 0, this.canvas!.width, this.canvas!.height);
-
-        // // 计算矩形的宽度和高度
-        // const width = Math.abs(this.endX - this.startX);
-        // const height = Math.abs(this.endY - this.startY);
-        // const rectX = Math.min(this.startX, this.endX);
-        // const rectY = Math.min(this.startY, this.endY);
-
-        // ctx.strokeStyle = '#39C5BB';
-        // ctx.lineWidth = 2;
-        // ctx.strokeRect(rectX, rectY, width, height);
-
-        // ctx.fillStyle = '#39C5BB';
-        // this.draw(ctx);
     }
     private static endSelectingShapeNormalMoving(e: MouseEvent) {
         Shape.reDrawAllShape()
@@ -434,7 +434,97 @@ export class Shape {
         window.removeEventListener('mouseup', Shape.endSelectingShapeLineMoving)
 
     }
+
+    //font移动缩放
+    private static moveSelectingShapeFontMoving(e: MouseEvent) {
+        Shape.moveSelectingShapeFontlMovingHandle(e, cursor)
+    }
+    private static moveSelectingShapeFontlMovingHandle(e: MouseEvent, cursor: string) {
+        const _this = Shape.selectingShape?.object as Font;
+        if (!_this) return;
     
+        let x = e.clientX - Shape.startX;
+        let y = e.clientY - Shape.startY;
+    
+        console.log(cursor);
+    
+        const minSize = _this.minHeight; // 防止宽高变成负数
+    
+        let newWidth, newHeight;
+    
+        switch (cursor) {
+            case 'nw-resize': {  //  左上角拖动
+                newHeight = Math.max(_this.bottomRight.y - y, minSize);
+                _this.fontSize = 12 +  newHeight - _this.minHeight
+                newWidth = Shape.getFontSizeWidth(_this) + 5
+
+                _this.topLeft = { x: _this.bottomRight.x - newWidth, y: _this.bottomRight.y - newHeight };
+                _this.topRight = { x: _this.bottomRight.x, y: _this.bottomRight.y - newHeight };
+                _this.bottomLeft = { x:_this.bottomRight.x - newWidth, y: _this.bottomRight.y };
+
+                break;
+            }
+            case 'ne-resize': {  //  右上角拖动
+                newHeight = Math.max(y - _this.bottomLeft.y, minSize);
+                _this.fontSize = 12 +  newHeight - _this.minHeight
+                newWidth = Shape.getFontSizeWidth(_this) + 5
+
+                _this.topRight = { x:_this.bottomLeft.x + newWidth, y: _this.bottomLeft.y - newHeight };
+                _this.topLeft = { x: _this.bottomLeft.x, y: _this.bottomLeft.y - newHeight };
+                _this.bottomRight = { x:_this.bottomLeft.x + newWidth, y: _this.bottomLeft.y };
+                break;
+            }
+            case 'sw-resize': {  //  左下角拖动
+                newHeight = Math.max(_this.topRight.y - y, minSize);
+                _this.fontSize = 12 +  newHeight - _this.minHeight
+                newWidth = Shape.getFontSizeWidth(_this) + 5
+
+                _this.bottomLeft = { x:_this.topRight.x - newWidth, y: _this.topRight.y + newHeight };
+                _this.topLeft = { x:_this.topRight.x - newWidth, y: _this.topRight.y };
+                _this.bottomRight = { x: _this.topRight.x, y: _this.topRight.y + newHeight };
+                break;
+            }
+            case 'se-resize': {  //  右下角拖动
+                newHeight = Math.max(y - _this.topLeft.y, minSize);
+                _this.fontSize = 12 +  newHeight - _this.minHeight
+                newWidth = Shape.getFontSizeWidth(_this) + 5
+
+                _this.bottomRight = { x:_this.topLeft.x + newWidth, y: _this.topLeft.y + newHeight };
+                _this.topRight = { x:_this.topLeft.x + newWidth, y: _this.topLeft.y };
+                _this.bottomLeft = { x: _this.topLeft.x, y: _this.topLeft.y + newHeight };
+                _this.fontSize = 12 +  newHeight - _this.minHeight
+                _this.inputDom
+                break;
+            }
+            default: {
+                const deltaX = x - Shape.selectingShapeUpdateStartMousePostion.x;
+                const deltaY = y - Shape.selectingShapeUpdateStartMousePostion.y;
+                Shape.selectingShapeUpdateStartMousePostion = {
+                    x, y
+                }
+                _this.topLeft = { x: _this.topLeft.x + deltaX, y: _this.topLeft.y + deltaY }
+                _this.topRight = { x: _this.topRight.x + deltaX, y: _this.topRight.y + deltaY }
+                _this.bottomLeft = { x: _this.bottomLeft.x + deltaX, y: _this.bottomLeft.y + deltaY }
+                _this.bottomRight = { x: _this.bottomRight.x + deltaX, y: _this.bottomRight.y + deltaY }
+                break;
+            }
+        }
+    
+        Shape.reDrawAllShape();
+    }
+    //编辑文本
+    private static editText(e:MouseEvent){
+        Shape.shapeList = Shape.shapeList.filter(item => item !== Shape.selectingShape)
+        Shape.reDrawAllShape()
+        const _this = Shape.selectingShape?.object as Font;
+        _this.inputDom = _this.createInputDom(_this.topLeft.x + Shape.startX, _this.topLeft.y + Shape.startY)
+    }
+    
+    private static endSelectingShapeFontMoving(e: MouseEvent) {
+        window.removeEventListener('mousemove', Shape.moveSelectingShapeFontMoving)
+        window.removeEventListener('mouseup', Shape.endSelectingShapeFontMoving)
+    }
+
     //当选中后需要更具条件修改鼠标样式
     private static moveSelectingShapeNormalCursorStyle(e: MouseEvent) {
         Shape.canvas.style.cursor = Shape.checkNormalPointCursorStyle({ x: e.offsetX, y: e.offsetY }, (Shape.selectingShape?.object as Circle | Square).getNormal()!)
@@ -491,6 +581,36 @@ export class Shape {
         return 'default'
     }
 
+    //font的鼠标样式
+    private static moveSelectingShapeFontCursorStyle(e: MouseEvent) {
+        Shape.canvas.style.cursor = Shape.checkFontPointCursorStyle({ x: e.offsetX, y: e.offsetY }, (Shape.selectingShape?.object as Font))
+    }
+    private static checkFontPointCursorStyle({ x, y }: Point, { topLeft, topRight, bottomLeft, bottomRight, squareSize }: Font) {
+          // 检查是否在 topLeft 点范围内
+          if (x >= topLeft.x - squareSize / 2 && x <= topLeft.x + squareSize / 2 &&
+            y >= topLeft.y - squareSize / 2 && y <= topLeft.y + squareSize / 2) {
+            return 'nw-resize';
+        }
+
+        // 检查是否在 topRight 点范围内
+        if (x >= topRight.x - squareSize / 2 && x <= topRight.x + squareSize / 2 &&
+            y >= topRight.y - squareSize / 2 && y <= topRight.y + squareSize / 2) {
+            return 'ne-resize';
+        }
+
+        // 检查是否在 bottomLeft 点范围内
+        if (x >= bottomLeft.x - squareSize / 2 && x <= bottomLeft.x + squareSize / 2 &&
+            y >= bottomLeft.y - squareSize / 2 && y <= bottomLeft.y + squareSize / 2) {
+            return 'sw-resize';
+        }
+
+        // 检查是否在 bottomRight 点范围内
+        if (x >= bottomRight.x - squareSize / 2 && x <= bottomRight.x + squareSize / 2 &&
+            y >= bottomRight.y - squareSize / 2 && y <= bottomRight.y + squareSize / 2) {
+            return 'se-resize';
+        }
+        return 'default'
+    }
     // 设置canvas的宽高和位置
     static initCanvas(left: number, top: number, width: number, height: number) {
         console.log('initCanvas', Shape.shapeList.length);
@@ -554,6 +674,14 @@ export class Shape {
                 }
             } else if (shape.type === 'pencil') {
                 if (Shape.checkIfLineSelect(shape.object as Pencil, e.offsetX, e.offsetY)) {
+                    Shape.selectingShape = shape
+                    Shape.reDrawAllShape()
+                    return
+                }
+            } else if(shape.type === 'font'){
+                if(Shape.checkIfFontSelect(shape.object as Font, e.offsetX, e.offsetY)){
+                    console.log('字被选中');
+                    
                     Shape.selectingShape = shape
                     Shape.reDrawAllShape()
                     return
@@ -665,6 +793,25 @@ export class Shape {
         const dx = px - closestX;
         const dy = py - closestY;
         return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    private static checkIfFontSelect(font: Font, x: number, y: number): boolean {
+        const { topLeft, bottomRight,topRight,bottomLeft,squareSize } = font
+        return x >= topLeft.x && x <= bottomRight.x && y >= topLeft.y && y <= bottomRight.y || 
+        (x >= topLeft.x - squareSize / 2 && x <= topLeft.x + squareSize / 2 && y >= topLeft.y - squareSize / 2 && y <= topLeft.y + squareSize / 2) || 
+        (x >= topRight.x - squareSize / 2 && x <= topRight.x + squareSize / 2 && y >= topRight.y - squareSize / 2 && y <= topRight.y + squareSize / 2) ||
+        (x >= bottomLeft.x - squareSize / 2 && x <= bottomLeft.x + squareSize / 2 && y >= bottomLeft.y - squareSize / 2 && y <= bottomLeft.y + squareSize / 2) || 
+        (x >= bottomRight.x - squareSize / 2 && x <= bottomRight.x + squareSize / 2 && y >= bottomRight.y - squareSize / 2 && y <= bottomRight.y + squareSize / 2)
+    }
+
+    private static getFontSizeWidth(font: Font) {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')!
+        ctx.font = `${font.fontSize}px ${font.fontFamily}`;
+        ctx.fillStyle = font.fontColor;
+        const width = ctx.measureText(font.text).width
+        canvas.remove()
+        return width
     }
 
     //重绘

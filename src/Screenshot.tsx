@@ -221,10 +221,12 @@ export default function Screenshot() {
         }
     }
 
+    //TODO未知问题，当未选中文字输入框时，dbclick会失效
     const createFontHandle = useCallback((e:MouseEvent)=>{
         if (e.button !== 0) return;
         if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
         if (Shape.selectingShape) return;
+        console.log('>>>>>');
         new Font(e.clientX,e.clientY)
     },[])
 
