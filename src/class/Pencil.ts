@@ -1,3 +1,6 @@
+/*
+ * @Description: create by southernMD
+ */
 import { Point } from "./otherType";
 import { Shape } from "./Shape";
 
@@ -45,6 +48,7 @@ export class Pencil extends Shape {
             object: this,
         });
         this.ctx.closePath();
+        this.drawRectangle()
         window.removeEventListener("mousemove", this.draw);
         window.removeEventListener("mouseup", this.drawEnd);
     };

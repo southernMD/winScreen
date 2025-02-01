@@ -15,7 +15,8 @@ import { Font } from "./class/Font";
 export default function Screenshot() {
     const [imgUrl, setImgUrl] = useState('')
     const [mouseCursor, setMouseCursor] = useState('default')
-    const utilsRef = useRef<"" | "square" | "circle" | "pencil" | "font" | undefined>("");
+    const [utilsActive,setUtilsActive] = useState<"" | "square" | "circle" | "pencil" | "font" | "mosaic" | undefined>('')
+    // const utilsRef = useRef<"" | "square" | "circle" | "pencil" | "font" | "mosaic" | undefined>("");
     const mouseCursorRef = useRef('default');
     let fixedMouseCursor = 'default'
     useEffect(() => {
@@ -50,7 +51,7 @@ export default function Screenshot() {
     const mouseCursorStyleHandle = useCallback((e: MouseEvent) => {
         const type = mouseCanvasCtxRef.current!.mouseCursorStyleHandle(e);
         setMouseCursor(type);
-        if(!(utilsRef.current !== '' && fixedMouseCursor === 'move')){
+        if(!(utilsActive !== '' && fixedMouseCursor === 'move')){
             if(Shape.shapeList.length != 0) Shape.canvas.style.cursor = 'default'
         }
     }, []);
@@ -67,8 +68,8 @@ export default function Screenshot() {
     }, [fixedMouseCursor]);
 
     const screenShotSizeUpdateHandle = useCallback((e: MouseEvent) => {
-        console.log(utilsRef.current,fixedMouseCursor)
-        if(utilsRef.current !== '' && fixedMouseCursor === 'move') return
+        console.log(utilsActive,fixedMouseCursor)
+        if(utilsActive === '' && fixedMouseCursor === 'move') return
         else {
             if(Shape.shapeList.length != 0)Shape.canvas.style.cursor = 'default'
         }
@@ -80,12 +81,12 @@ export default function Screenshot() {
             Math.abs(startX - endX),
             Math.abs(startY - endY)
         );
-    }, [fixedMouseCursor, mouseCanvasCtxRef,utilsRef]);
+    }, [fixedMouseCursor, mouseCanvasCtxRef,utilsActive]);
 
     const screenShotSizeUpdateEndHandle = useCallback((e: MouseEvent) => {
         window.removeEventListener("mousemove", screenShotSizeUpdateHandle);
         if (!(e.target instanceof HTMLCanvasElement)) return;
-        if (utilsRef.current !== '' && fixedMouseCursor === 'move') return
+        if (utilsActive !== '' && fixedMouseCursor === 'move') return
         if (!["default", "move"].includes(fixedMouseCursor))
             mouseCanvasCtxRef.current!.screenShotSizeEndUpdateHandle(e, fixedMouseCursor);
         console.log("ddddtrue");
@@ -97,7 +98,7 @@ export default function Screenshot() {
             Math.abs(startX - endX),
             Math.abs(startY - endY)
         );
-    }, [fixedMouseCursor, mouseCanvasCtxRef,utilsRef.current]);
+    }, [fixedMouseCursor, mouseCanvasCtxRef,utilsActive]);
 
     const mouseupHandle = useCallback((e: MouseEvent) => {
         if (!(e.target instanceof HTMLCanvasElement)) return
@@ -130,7 +131,7 @@ export default function Screenshot() {
         });
         setMouseCursor('default')
         fixedMouseCursor = 'default'
-        utilsRef.current = ''
+        setUtilsActive('')
         Shape.clearCanvasAndDom()
         Shape.initCanvas(0,0,0,0)
         window.removeEventListener('contextmenu', resizeRectangle)
@@ -176,10 +177,10 @@ export default function Screenshot() {
     }, [])
 
     const onDrawSquare = () => {
-        if(utilsRef.current == 'square'){
-            utilsRef.current = ''
+        if(utilsActive == 'square'){
+            setUtilsActive("")
         }else{
-            utilsRef.current = 'square'
+            setUtilsActive("square")
         }
     }
     const createSquareHandle = useCallback((e: MouseEvent) => {
@@ -190,10 +191,10 @@ export default function Screenshot() {
     },[])
 
     const onDrawCircle = () => {
-        if(utilsRef.current == 'circle'){
-            utilsRef.current = ''
+        if(utilsActive == 'circle'){
+            setUtilsActive("")
         }else{
-            utilsRef.current = 'circle'
+            setUtilsActive("circle")
         }
     }
 
@@ -205,10 +206,10 @@ export default function Screenshot() {
     },[])
 
     const onDraw = () => {
-        if(utilsRef.current == 'pencil'){
-            utilsRef.current = ''
+        if(utilsActive == 'pencil'){
+            setUtilsActive("")
         }else{
-            utilsRef.current = 'pencil'
+            setUtilsActive("pencil")
         }
     }
 
@@ -220,43 +221,59 @@ export default function Screenshot() {
     },[])
 
     const onFont = () => {
-        if(utilsRef.current == 'font'){
-            utilsRef.current = ''
+        if(utilsActive == 'font'){
+            setUtilsActive("")
         }else{
-            utilsRef.current = 'font'
+            setUtilsActive("font")
         }
     }
 
-    //TODO:未知问题，当未选中文字输入框时，dbclick会失效
     const createFontHandle = useCallback((e:MouseEvent)=>{
         if (e.button !== 0) return;
         if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
         if (Shape.selectingShape) return;
-        console.log('>>>>>');
         new Font(e.clientX,e.clientY)
     },[])
+    const onMosaic = () => {
+        if(utilsActive == 'mosaic'){
+            setUtilsActive("")
+        }else{
+            setUtilsActive("mosaic")
+        }
+    }
 
+    const createMosaicHandle = useCallback((e:MouseEvent)=>{
+        if (e.button !== 0) return;
+        if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
+        if (Shape.selectingShape) return;
+        // new Mosaic(e.clientX,e.clientY)
+    },[])
+    
     useEffect(()=>{
+        console.log('为什么',utilsActive);
         window.removeEventListener('mousedown',createSquareHandle)
         window.removeEventListener('mousedown',createCircleHandle)
         window.removeEventListener('mousedown',createPencilHandle)
         window.removeEventListener('mousedown',createFontHandle)
-        if(utilsRef.current == ''){
+        window.removeEventListener('mousedown',createMosaicHandle)
+        if(utilsActive == ''){
             Shape.canvas.style.cursor = 'move'
         }else{
             Shape.canvas.style.cursor = 'default'
             setMouseCursor('default')
-            if(utilsRef.current == 'square'){
+            if(utilsActive == 'square'){
                 window.addEventListener('mousedown',createSquareHandle)
-            }else if(utilsRef.current == 'circle'){
+            }else if(utilsActive == 'circle'){
                 window.addEventListener('mousedown',createCircleHandle)
-            }else if(utilsRef.current == 'pencil'){
+            }else if(utilsActive == 'pencil'){
                 window.addEventListener('mousedown',createPencilHandle)
-            }else if(utilsRef.current == 'font'){
+            }else if(utilsActive == 'font'){
                 window.addEventListener('mousedown',createFontHandle)
+            }else if(utilsActive == 'mosaic'){
+                window.addEventListener('mousedown',createMosaicHandle)
             }
         }
-    },[utilsRef.current])
+    },[utilsActive,setUtilsActive])
 
 
     const savePick = () => {
@@ -303,9 +320,10 @@ export default function Screenshot() {
                             onDrawCircle={onDrawCircle}
                             onDraw={onDraw}
                             onFont={onFont}
+                            onMosaic={onMosaic}
                             onCheck={savePick}
                             onQuit={closeWindowHandle}
-                            active={utilsRef.current}
+                            active={utilsActive}
                         />
                     ):''
                 }

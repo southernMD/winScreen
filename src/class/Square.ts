@@ -4,6 +4,9 @@
 /*
  * @Description: create by southernMD
  */
+/*
+ * @Description: create by southernMD
+ */
 
 import { Normal } from "./Normal";
 import { Point } from "./otherType";
@@ -14,6 +17,8 @@ export class Square extends Shape {
 
     constructor(clientX:number,clientY:number) {
         super();
+        console.log(">>>>实例化");
+        
         this.normal = new Normal();
         this.normal.startX = clientX - Shape.startX
         this.normal.startY = clientY - Shape.startY

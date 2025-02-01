@@ -15,6 +15,9 @@ interface ShapeType {
 
 let cursor = ''
 
+let lastClickTime = 0;
+let clickTimeout:NodeJS.Timeout 
+
 export abstract class Shape {
     static canvas: HTMLCanvasElement;
     static canvasWidth: number;
@@ -51,7 +54,7 @@ export abstract class Shape {
         window.removeEventListener("mousedown", Shape.moveSelectingShapeStart)
         window.removeEventListener("mousemove", Shape.moveSelectingShapeNormalCursorStyle)
         window.removeEventListener("mousemove", Shape.moveSelectingShapeFontCursorStyle)
-        window.removeEventListener("dblclick",Shape.editText)
+        // window.removeEventListener("dblclick",Shape.editText)
         if (newShape) {
             if (this.isLeftMouseDown) {
                 console.log("左键已经按下");
@@ -62,7 +65,7 @@ export abstract class Shape {
                 window.addEventListener("mousemove", Shape.moveSelectingShapeNormalCursorStyle)
             }else if(Shape.selectingShape?.type === 'font'){
                 window.addEventListener("mousemove", Shape.moveSelectingShapeFontCursorStyle)
-                window.addEventListener("dblclick",Shape.editText)
+                window.addEventListener("mousedown",Shape.editText)
             }
             console.log("新选中的形状:", newShape);
         } else {
@@ -514,10 +517,24 @@ export abstract class Shape {
     }
     //编辑文本
     private static editText(e:MouseEvent){
-        Shape.shapeList = Shape.shapeList.filter(item => item !== Shape.selectingShape)
-        Shape.reDrawAllShape()
-        const _this = Shape.selectingShape?.object as Font;
-        _this.inputDom = _this.createInputDom(_this.topLeft.x + Shape.startX, _this.topLeft.y + Shape.startY)
+        if(e.button !== 0) return
+        const currentTime = new Date().getTime();
+    
+        // 如果两次点击的时间间隔小于300ms，则触发双击事件
+        if (currentTime - lastClickTime <= 300) {
+            Shape.shapeList = Shape.shapeList.filter(item => item !== Shape.selectingShape)
+            Shape.reDrawAllShape()
+            const _this = Shape.selectingShape?.object as Font;
+            _this.inputDom = _this.createInputDom(_this.topLeft.x + Shape.startX, _this.topLeft.y + Shape.startY)
+            clearTimeout(clickTimeout); // 清除单击事件的延时
+        } else {
+            // 设置一个延时器，假设单击事件是300ms后触发
+            clickTimeout = setTimeout(() => {
+                console.log('单击事件触发');
+            }, 300);
+        }
+    
+        lastClickTime = currentTime; // 记录当前时间
     }
     
     private static endSelectingShapeFontMoving(e: MouseEvent) {
