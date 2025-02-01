@@ -1,8 +1,11 @@
 /*
  * @Description: create by southernMD
  */
+/*
+ * @Description: create by southernMD
+ */
 
-import React from 'react';
+import React, { forwardRef, LegacyRef } from 'react';
 import {
     Check,
     X,
@@ -23,9 +26,9 @@ interface CropToolbarProps {
     active?:'square' | 'circle' | 'pencil' | 'font' | '';
 }
 
-export const CropToolbar: React.FC<CropToolbarProps> = ({ onCheck,onQuit,onDrawSquare,onDrawCircle,onDraw,onFont,active }) => {
+export const CropToolbar= forwardRef<HTMLDivElement, CropToolbarProps>(({ onCheck,onQuit,onDrawSquare,onDrawCircle,onDraw,onFont,active }, ref: LegacyRef<HTMLDivElement> ) => {
     return (
-        <div className={styles.toolbar}>
+        <div ref={ref} className={styles.toolbar}>
             <div className={styles.toolGroup}>
                 <button className={`${styles.toolButton} ${active === 'square' ? styles.active : ''}`} onClick={onDrawSquare}>
                     <Square size={20} />
@@ -48,4 +51,4 @@ export const CropToolbar: React.FC<CropToolbarProps> = ({ onCheck,onQuit,onDrawS
             </div>
         </div>
     );
-};
+})

@@ -41,6 +41,7 @@ export default function Screenshot() {
     }, []);
 
     const mouseUpdateHandle = useCallback((e: MouseEvent) => {
+        mouseCanvasCtxRef.current!.isActive = false
         mouseCanvasCtxRef.current!.endX = e.clientX;
         mouseCanvasCtxRef.current!.endY = e.clientY;
         mouseCanvasCtxRef.current!.drawRectangle();
@@ -87,6 +88,8 @@ export default function Screenshot() {
         if (utilsRef.current !== '' && fixedMouseCursor === 'move') return
         if (!["default", "move"].includes(fixedMouseCursor))
             mouseCanvasCtxRef.current!.screenShotSizeEndUpdateHandle(e, fixedMouseCursor);
+        console.log("ddddtrue");
+        mouseCanvasCtxRef.current!.isActive = true
         const { startX, startY, endX, endY } = mouseCanvasCtxRef.current!.clip;
         Shape.initCanvas(
             startX,
@@ -99,12 +102,17 @@ export default function Screenshot() {
     const mouseupHandle = useCallback((e: MouseEvent) => {
         if (!(e.target instanceof HTMLCanvasElement)) return
         const { startX, startY, endX, endY } = mouseCanvasCtxRef.current!.clip;
+        if(Math.abs(startX - endX) < 10 || Math.abs(startY - endY) < 10){
+            resizeRectangle()
+            return
+        }
         Shape.initCanvas(
             startX,
             startY,
             Math.abs(startX - endX),
             Math.abs(startY - endY),
         )
+        mouseCanvasCtxRef.current!.isActive = true
         window.removeEventListener('mousemove', mouseUpdateHandle)
         window.removeEventListener('mouseup', mouseupHandle)
         window.removeEventListener("mousedown", mousedownHandle)
@@ -116,6 +124,7 @@ export default function Screenshot() {
 
     const resizeRectangle = () => {
         mouseCanvasCtxRef.current!.clearCanvas()
+        mouseCanvasCtxRef.current!.init()
         setClipStyle({
             clip: `rect(0px, 0px, 0px, 0px)`
         });
@@ -123,7 +132,7 @@ export default function Screenshot() {
         fixedMouseCursor = 'default'
         utilsRef.current = ''
         Shape.clearCanvasAndDom()
-
+        Shape.initCanvas(0,0,0,0)
         window.removeEventListener('contextmenu', resizeRectangle)
         window.removeEventListener('mousemove', mouseUpdateHandle)
         window.removeEventListener('mousemove', mouseCursorStyleHandle)
@@ -151,9 +160,6 @@ export default function Screenshot() {
                     clip: `rect(${clip.startY}px, ${clip.endX}px, ${clip.endY}px, ${clip.startX}px)`
                 });
             });
-            // mouseCanvasCtxRef.current.setOnCursorStyleChange((cursor)=>{
-            //     fixedMouseCursor = cursor
-            // })
         }
         window.addEventListener("contextmenu", closeWindowHandle);
         window.addEventListener("keydown", hideHandle)
@@ -221,7 +227,7 @@ export default function Screenshot() {
         }
     }
 
-    //TODO未知问题，当未选中文字输入框时，dbclick会失效
+    //TODO:未知问题，当未选中文字输入框时，dbclick会失效
     const createFontHandle = useCallback((e:MouseEvent)=>{
         if (e.button !== 0) return;
         if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
@@ -251,6 +257,8 @@ export default function Screenshot() {
             }
         }
     },[utilsRef.current])
+
+
     const savePick = () => {
         const img = new Image()
         img.src = imgUrl
@@ -283,19 +291,24 @@ export default function Screenshot() {
     }
 
 
-
+    const CropToolbarRef = useRef<HTMLDivElement | null>(null);
     return (
         <>
             <div className="screenshot">
-                <CropToolbar
-                    onDrawSquare={onDrawSquare}
-                    onDrawCircle={onDrawCircle}
-                    onDraw={onDraw}
-                    onFont={onFont}
-                    onCheck={savePick}
-                    onQuit={closeWindowHandle}
-                    active={utilsRef.current}
-                />
+                {
+                    mouseCanvasCtxRef.current && mouseCanvasCtxRef.current.isActive ? (
+                        <CropToolbar
+                            ref={CropToolbarRef}
+                            onDrawSquare={onDrawSquare}
+                            onDrawCircle={onDrawCircle}
+                            onDraw={onDraw}
+                            onFont={onFont}
+                            onCheck={savePick}
+                            onQuit={closeWindowHandle}
+                            active={utilsRef.current}
+                        />
+                    ):''
+                }
                 <canvas className="select-box" ref={canvasRef}
                     style={{ cursor: mouseCursor }}
                 ></canvas>

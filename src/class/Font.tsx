@@ -37,7 +37,6 @@ export class Font extends Shape {
         },0)
     }
     private onUpdateText = (txt: string) => {
-        console.log(txt);
         this.text = txt
     }
     private inputBlur = () => {

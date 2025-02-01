@@ -24,6 +24,28 @@ export class MouseCanvasStyle {
         endX: 0,
         endY: 0
     };
+    public isActive = false
+    public init = ()=>{
+        this.startX = 0
+        this.endX = 0
+        this.endY = 0
+        this.startY = 0
+        this.topLeft = { x: 0, y: 0 }
+        this.topMid = { x: 0, y: 0 }
+        this.topRight = { x: 0, y: 0 }
+        this.midLeft = { x: 0, y: 0 }
+        this.midRight = { x: 0, y: 0 }
+        this.bottomLeft = { x: 0, y: 0 }
+        this.bottomMid = { x: 0, y: 0 }
+        this.bottomRight = { x: 0, y: 0 }
+        this.clip = {
+            startX: 0,
+            startY: 0,
+            endX: 0,
+            endY: 0
+        };
+        this.isActive = false
+    }
     public screenShotSizeUpdateStartMousePostion = {
         x:0,
         y:0
@@ -34,6 +56,7 @@ export class MouseCanvasStyle {
     constructor(canvas: HTMLCanvasElement) {
         console.log(canvas);
         this.canvas = canvas
+        this.init()
     }
 
     public setOnClipChange(callback: (clip: { startX: number, startY: number, endX: number, endY: number }) => void) {
