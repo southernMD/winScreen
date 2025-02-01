@@ -16,6 +16,7 @@ import {
     Paintbrush
 } from 'lucide-react';
 import styles from '../assets/css/CropToolbar.module.css';
+import { CustomSlider } from './CustomSlider/CustomSlider';
 
 interface CropToolbarProps {
     onCheck?: () => void;
@@ -31,12 +32,7 @@ interface CropToolbarProps {
 export const CropToolbar= forwardRef<HTMLDivElement, CropToolbarProps>(({ onCheck,onQuit,onDrawSquare,onDrawCircle,onDraw,onFont,onMosaic,active }, ref: LegacyRef<HTMLDivElement> ) => {
     const [mosaicSize, setMosaicSize] = useState(10);
 
-    const handleSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setMosaicSize(Number(e.target.value));
-    };
-
     // Calculate thumb size based on pencil size (scaled down for UI)
-    const thumbSize = Math.max(16, Math.min(32, mosaicSize * 0.75));
     const handlePencilClick = ()=>{
         onMosaic()
     }
@@ -65,19 +61,14 @@ export const CropToolbar= forwardRef<HTMLDivElement, CropToolbarProps>(({ onChec
                     <Check size={20} color="#44ba81" />
                 </button>
             </div>
-            <div 
-                className={`${styles.sliderContainer} ${active === 'mosaic' ? styles.visible : ''}`}
-                style={{ '--thumb-size': `${thumbSize}px` } as React.CSSProperties}
-            >
-                <input
-                    type="range"
-                    min="1"
-                    max="50"
+            <div className={`${styles.sliderPopup} ${active === 'mosaic' ? styles.visible : ''}`}>
+                <CustomSlider
                     value={mosaicSize}
-                    onChange={handleSizeChange}
-                    className={styles.slider}
+                    onChange={setMosaicSize}
+                    min={1}
+                    max={50}
+                    thumbSizeMultiplier={0.75}
                 />
-                <span className={styles.sizeDisplay}>{mosaicSize}</span>
             </div>
         </div>
     );
