@@ -2,13 +2,13 @@
  * @Author: southernMD 2483723241@qq.com
  * @Date: 2025-01-25 17:14:45
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-01-27 14:27:12
+ * @LastEditTime: 2025-02-02 15:21:05
  * @FilePath: \winPick\src\App.tsx
  * @Description: 入口文件
  */
 import { useState } from 'react'
 import { CropToolbar } from './components/CropToolbar';
-
+import { changeDpiDataUrl } from 'changedpi'
 function App() {
   const pickHandle = async () => {
     try {
@@ -35,7 +35,8 @@ function App() {
 
         // 将 canvas 转换为图片（base64 格式，PNG）
         const imageUrl = canvas.toDataURL('image/png');
-        console.log('Captured frame as image URL:', imageUrl);
+        const daurl300dpi = changeDpiDataUrl(imageUrl, 300);
+        console.log('Captured frame as image URL:', daurl300dpi);
 
         // 将图片 URL 显示在页面上
         // const img = document.createElement('img');
@@ -52,7 +53,6 @@ function App() {
   return (
     <>
       <button onClick={pickHandle}>点击截屏</button>
-      <CropToolbar />
     </>
   )
 }

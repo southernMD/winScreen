@@ -30,7 +30,7 @@ export abstract class Shape {
     static isLeftMouseDown = false;
     private static mouseEvent: MouseEvent | null = null
     private static _selectingShape: null | ShapeType = null;
-
+    static isMosaic:Boolean = false
     abstract drawRectangle(tips?: string[], type?: number): void;
 
     private static selectingShapeUpdateStartMousePostion = {
@@ -656,6 +656,7 @@ export abstract class Shape {
         if (document.body.contains(Shape.canvas)) {
             const ctx = Shape.canvas.getContext('2d')!
             document.body.removeChild(Shape.canvas)
+            Shape.canvas.remove()
             ctx.clearRect(0, 0, Shape.canvas!.width, Shape.canvas!.height);
             Shape.shapeList = []
         }
@@ -663,6 +664,9 @@ export abstract class Shape {
     //判断该点是否在画布范围内
     static isInCanvas(x: number, y: number) {
         return x >= Shape.startX && x <= Shape.endX && y >= Shape.startY && y <= Shape.endY
+    }
+    static isInCanvasNoBoeder(x: number, y: number) {
+        return x > Shape.startX && x < Shape.endX && y > Shape.startY && y < Shape.endY
     }
     //选中元素事件
     private static mousedownHandler = (e: MouseEvent) => {
@@ -673,6 +677,8 @@ export abstract class Shape {
             }
             return
         }
+        if(Shape.isMosaic) return
+
         for (let i = 0; i < Shape.shapeList.length; i++) {
             const shape = Shape.shapeList[i]
             if (shape.type === 'square') {

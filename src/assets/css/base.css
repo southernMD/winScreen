@@ -23,7 +23,9 @@ time, mark, audio, video {
 	vertical-align: baseline;
 	border: none;
 }
-
+canvas {
+    image-rendering: pixelated;  /* 强制像素渲染 */
+}
 body{
 	font-family:var(--fontFamily);
 }

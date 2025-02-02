@@ -11,12 +11,19 @@ import { Shape } from './class/Shape'
 import { Circle } from "./class/Circle";
 import { Pencil } from "./class/Pencil";
 import { Font } from "./class/Font";
-
+import { Mosaic } from "./class/Mosaic";
+import {changeDpiDataUrl} from 'changedpi'
+import { createPortal } from "react-dom";
 export default function Screenshot() {
     const [imgUrl, setImgUrl] = useState('')
     const [mouseCursor, setMouseCursor] = useState('default')
     const [utilsActive,setUtilsActive] = useState<"" | "square" | "circle" | "pencil" | "font" | "mosaic" | undefined>('')
-    // const utilsRef = useRef<"" | "square" | "circle" | "pencil" | "font" | "mosaic" | undefined>("");
+
+    const utilsActiveRef = useRef(utilsActive);
+    useEffect(() => {
+        utilsActiveRef.current = utilsActive;
+    }, [utilsActive]);
+
     const mouseCursorRef = useRef('default');
     let fixedMouseCursor = 'default'
     useEffect(() => {
@@ -51,7 +58,7 @@ export default function Screenshot() {
     const mouseCursorStyleHandle = useCallback((e: MouseEvent) => {
         const type = mouseCanvasCtxRef.current!.mouseCursorStyleHandle(e);
         setMouseCursor(type);
-        if(!(utilsActive !== '' && fixedMouseCursor === 'move')){
+        if(!(utilsActiveRef.current !== '' && fixedMouseCursor === 'move')){
             if(Shape.shapeList.length != 0) Shape.canvas.style.cursor = 'default'
         }
     }, []);
@@ -68,37 +75,39 @@ export default function Screenshot() {
     }, [fixedMouseCursor]);
 
     const screenShotSizeUpdateHandle = useCallback((e: MouseEvent) => {
-        console.log(utilsActive,fixedMouseCursor)
-        if(utilsActive === '' && fixedMouseCursor === 'move') return
+        console.log(utilsActiveRef.current,fixedMouseCursor)
+        if(utilsActiveRef.current !== '' && fixedMouseCursor === 'move') return
         else {
             if(Shape.shapeList.length != 0)Shape.canvas.style.cursor = 'default'
         }
         mouseCanvasCtxRef.current!.screenShotSizeUpdateHandle(e, fixedMouseCursor);
         const { startX, startY, endX, endY } = mouseCanvasCtxRef.current!.clip;
+        mosaic?.resizeMosaic(mouseCanvasCtxRef.current!.clip)
         Shape.initCanvas(
             startX,
             startY,
             Math.abs(startX - endX),
             Math.abs(startY - endY)
         );
-    }, [fixedMouseCursor, mouseCanvasCtxRef,utilsActive]);
+    }, [fixedMouseCursor, mouseCanvasCtxRef]);
 
     const screenShotSizeUpdateEndHandle = useCallback((e: MouseEvent) => {
         window.removeEventListener("mousemove", screenShotSizeUpdateHandle);
         if (!(e.target instanceof HTMLCanvasElement)) return;
-        if (utilsActive !== '' && fixedMouseCursor === 'move') return
+        if (utilsActiveRef.current !== '' && fixedMouseCursor === 'move') return
         if (!["default", "move"].includes(fixedMouseCursor))
             mouseCanvasCtxRef.current!.screenShotSizeEndUpdateHandle(e, fixedMouseCursor);
-        console.log("ddddtrue");
         mouseCanvasCtxRef.current!.isActive = true
         const { startX, startY, endX, endY } = mouseCanvasCtxRef.current!.clip;
+        mosaic?.resizeMosaic(mouseCanvasCtxRef.current!.clip)
+        mosaic?.updateImgData()
         Shape.initCanvas(
             startX,
             startY,
             Math.abs(startX - endX),
             Math.abs(startY - endY)
         );
-    }, [fixedMouseCursor, mouseCanvasCtxRef,utilsActive]);
+    }, [fixedMouseCursor, mouseCanvasCtxRef]);
 
     const mouseupHandle = useCallback((e: MouseEvent) => {
         if (!(e.target instanceof HTMLCanvasElement)) return
@@ -107,6 +116,8 @@ export default function Screenshot() {
             resizeRectangle()
             return
         }
+        mosaic?.resizeMosaic(mouseCanvasCtxRef.current!.clip)
+        mosaic?.updateImgData()
         Shape.initCanvas(
             startX,
             startY,
@@ -134,6 +145,10 @@ export default function Screenshot() {
         setUtilsActive('')
         Shape.clearCanvasAndDom()
         Shape.initCanvas(0,0,0,0)
+
+        mosaic?.destroy()
+        
+
         window.removeEventListener('contextmenu', resizeRectangle)
         window.removeEventListener('mousemove', mouseUpdateHandle)
         window.removeEventListener('mousemove', mouseCursorStyleHandle)
@@ -149,17 +164,18 @@ export default function Screenshot() {
 
     const setImgURl = ({ }, { imageUrl }: { imageUrl: string }) => {
         setImgUrl(imageUrl)
+        mosaic?.setImgCanvas(imageUrl, mouseCanvasCtxRef.current!.clip)
     }
     useEffect(() => {
         if (canvasRef.current && !mouseCanvasCtxRef.current) {
             mouseCanvasCtxRef.current = new MouseCanvasStyle(canvasRef.current);
             canvasRef.current.width = window.innerWidth;
             canvasRef.current.height = window.innerHeight;
-
             mouseCanvasCtxRef.current.setOnClipChange((clip) => {
                 setClipStyle({
                     clip: `rect(${clip.startY}px, ${clip.endX}px, ${clip.endY}px, ${clip.startX}px)`
                 });
+                console.log("更新了");
             });
         }
         window.addEventListener("contextmenu", closeWindowHandle);
@@ -234,6 +250,8 @@ export default function Screenshot() {
         if (Shape.selectingShape) return;
         new Font(e.clientX,e.clientY)
     },[])
+
+
     const onMosaic = () => {
         if(utilsActive == 'mosaic'){
             setUtilsActive("")
@@ -241,21 +259,27 @@ export default function Screenshot() {
             setUtilsActive("mosaic")
         }
     }
+    const [mosaicSize,setMosaicSize] = useState(10)
+    const [mosaic,setMosaic] = useState<null | Mosaic>(new Mosaic(mosaicSize))
+    const [isMosaicVisible,setIsMosaicVisible] = useState(false)
+    const onMosaicSizeChange = (size:number)=>{
+        setMosaicSize(size)
+        mosaic!.resizeMosaicSize(size)
+    }
 
-    const createMosaicHandle = useCallback((e:MouseEvent)=>{
-        if (e.button !== 0) return;
-        if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
-        if (Shape.selectingShape) return;
-        // new Mosaic(e.clientX,e.clientY)
-    },[])
+    //TODO:马赛克会在操作大选取框时重置
+    //TODO:马赛克应该使用最底下canvas实现而非新创建
+    const mosaicMouseStyleHandle = (e:MouseEvent)=>{
+        if(!Shape.isInCanvasNoBoeder(e.clientX,e.clientY) || fixedMouseCursor!="default"){
+            setIsMosaicVisible(false)
+            return
+        }else{
+            setIsMosaicVisible(true)
+        }
+    }
     
+
     useEffect(()=>{
-        console.log('为什么',utilsActive);
-        window.removeEventListener('mousedown',createSquareHandle)
-        window.removeEventListener('mousedown',createCircleHandle)
-        window.removeEventListener('mousedown',createPencilHandle)
-        window.removeEventListener('mousedown',createFontHandle)
-        window.removeEventListener('mousedown',createMosaicHandle)
         if(utilsActive == ''){
             Shape.canvas.style.cursor = 'move'
         }else{
@@ -270,10 +294,20 @@ export default function Screenshot() {
             }else if(utilsActive == 'font'){
                 window.addEventListener('mousedown',createFontHandle)
             }else if(utilsActive == 'mosaic'){
-                window.addEventListener('mousedown',createMosaicHandle)
+                window.addEventListener("mousemove",mosaicMouseStyleHandle)
+                Shape.isMosaic = true
             }
         }
-    },[utilsActive,setUtilsActive])
+        return ()=>{
+            console.log("辅助");
+            Shape.isMosaic = false
+            window.removeEventListener('mousedown',createSquareHandle)
+            window.removeEventListener('mousedown',createCircleHandle)
+            window.removeEventListener('mousedown',createPencilHandle)
+            window.removeEventListener('mousedown',createFontHandle)
+            window.removeEventListener("mousemove",mosaicMouseStyleHandle)
+        }
+    },[utilsActive,setUtilsActive,mosaicSize])
 
 
     const savePick = () => {
@@ -289,15 +323,25 @@ export default function Screenshot() {
             tempCanvas.width = width;
             tempCanvas.height = height;
             const tempCtx = tempCanvas.getContext('2d');
-
+            const dpr = window.devicePixelRatio;
+            // 重新设置 canvas 自身宽高大小和 css 大小。放大 canvas；css 保持不变，因为我们需要那么多的点
+            tempCanvas.width = Math.round(width * dpr);
+            tempCanvas.height = Math.round(height * dpr);
+            tempCanvas.style.width = width + 'px';
+            tempCanvas.style.height = height + 'px';
+            // 直接用 scale 放大整个坐标系，相对来说就是放大了每个绘制操作
+            tempCtx!.scale(dpr, dpr);
             if (tempCtx) {
                 // 将原 Canvas 中的裁剪区域绘制到新的 Canvas 上
                 tempCtx.drawImage(img, startX, startY, width, height, 0, 0, width, height);
+                if(mosaic && mosaic.canvas)tempCtx.drawImage(mosaic.canvas, 0, 0, width, height)
                 tempCtx.drawImage(Shape.canvas, 0, 0, width, height)
                 // 将新的 Canvas 转换为图片并下载
-                const croppedImageDataURL = tempCanvas.toDataURL('image/png');
+                const croppedImageDataURL = tempCanvas.toDataURL('image/png', 1.0);
+                const daurl300dpi = changeDpiDataUrl(croppedImageDataURL, 300);
+                
                 const link = document.createElement('a');
-                link.href = croppedImageDataURL;
+                link.href = daurl300dpi;
                 link.download = 'cropped-image.png';
                 document.body.appendChild(link);
                 link.click();
@@ -309,11 +353,12 @@ export default function Screenshot() {
 
 
     const CropToolbarRef = useRef<HTMLDivElement | null>(null);
+
     return (
         <>
             <div className="screenshot">
                 {
-                    mouseCanvasCtxRef.current && mouseCanvasCtxRef.current.isActive ? (
+                    createPortal(mouseCanvasCtxRef.current && mouseCanvasCtxRef.current.isActive ? (
                         <CropToolbar
                             ref={CropToolbarRef}
                             onDrawSquare={onDrawSquare}
@@ -324,12 +369,18 @@ export default function Screenshot() {
                             onCheck={savePick}
                             onQuit={closeWindowHandle}
                             active={utilsActive}
+                            onMosaicSizeChange={onMosaicSizeChange}
+                            isMosaicVisible={isMosaicVisible}
                         />
-                    ):''
+                    ):'',document.body)
                 }
-                <canvas className="select-box" ref={canvasRef}
-                    style={{ cursor: mouseCursor }}
-                ></canvas>
+                {
+                    createPortal(
+                        <canvas className="select-box" ref={canvasRef}
+                            style={{ cursor: mouseCursor }}
+                        ></canvas>,document.body
+                    )
+                }
                 <img className="bg" src={imgUrl} />
                 <img className="choice" src={imgUrl} style={clipStyle} />
             </div>

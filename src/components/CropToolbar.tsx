@@ -1,11 +1,7 @@
 /*
  * @Description: create by southernMD
  */
-/*
- * @Description: create by southernMD
- */
-
-import React, { forwardRef, LegacyRef, useState } from 'react';
+import React, { forwardRef, LegacyRef, useEffect, useState } from 'react';
 import {
     Check,
     X,
@@ -17,7 +13,9 @@ import {
 } from 'lucide-react';
 import styles from '../assets/css/CropToolbar.module.css';
 import { CustomSlider } from './CustomSlider/CustomSlider';
-
+import { MosaicCursor } from './MosaicCursor/MosaicCursor';
+import ReactDOM from 'react-dom/client'
+import { Shape } from '../class/Shape';
 interface CropToolbarProps {
     onCheck?: () => void;
     onQuit?: () => void;
@@ -26,45 +24,71 @@ interface CropToolbarProps {
     onDraw: () => void;
     onFont: () => void;
     onMosaic: () => void;
+    onMosaicSizeChange?:(value:number)=>void
+    isMosaicVisible:boolean
     active?:'square' | 'circle' | 'pencil' | 'font' | 'mosaic' | '';
 }
 
-export const CropToolbar= forwardRef<HTMLDivElement, CropToolbarProps>(({ onCheck,onQuit,onDrawSquare,onDrawCircle,onDraw,onFont,onMosaic,active }, ref: LegacyRef<HTMLDivElement> ) => {
+export const CropToolbar= forwardRef<HTMLDivElement, CropToolbarProps>(({ onCheck,onQuit,onDrawSquare,onDrawCircle,onDraw,onFont,onMosaic,onMosaicSizeChange,active,isMosaicVisible }, ref: LegacyRef<HTMLDivElement> ) => {
     const [mosaicSize, setMosaicSize] = useState(10);
-
     // Calculate thumb size based on pencil size (scaled down for UI)
     const handlePencilClick = ()=>{
         onMosaic()
     }
+
+    const handleMosaicSizeChange = (size: number) => {
+        setMosaicSize(size);
+        if (onMosaicSizeChange) {
+            onMosaicSizeChange(size); // 调用回调函数
+        }
+    };
+
+
+    useEffect(()=>{
+        console.log(mosaicSize,isMosaicVisible);
+        const dom = document.createElement("div")
+        if(active === 'mosaic'){
+            document.body.appendChild(dom)
+            ReactDOM.createRoot(dom).render(
+                <MosaicCursor 
+                    size={mosaicSize}
+                    isVisible={isMosaicVisible}
+                />
+            )
+        }
+        return ()=>{
+            dom.remove()
+        }
+    },[active,mosaicSize,isMosaicVisible])
     return (
         <div ref={ref} className={styles.toolbar}>
             <div className={styles.toolGroup}>
-                <button className={`${styles.toolButton} ${active === 'square' ? styles.active : ''}`} onClick={onDrawSquare}>
+                <button title="矩形" className={`${styles.toolButton} ${active === 'square' ? styles.active : ''}`} onClick={onDrawSquare}>
                     <Square size={20} />
                 </button>
-                <button className={`${styles.toolButton} ${active === 'circle' ? styles.active : ''}`} onClick={onDrawCircle}>
+                <button title='椭圆' className={`${styles.toolButton} ${active === 'circle' ? styles.active : ''}`} onClick={onDrawCircle}>
                     <Circle size={20} />
                 </button>
-                <button className={`${styles.toolButton} ${active === 'pencil' ? styles.active : ''}`} onClick={onDraw}>
+                <button title='画笔' className={`${styles.toolButton} ${active === 'pencil' ? styles.active : ''}`} onClick={onDraw}>
                     <Pencil size={20} />
                 </button>
-                <button className={`${styles.toolButton} ${active === 'font' ? styles.active : ''}`} onClick={onFont}>
+                <button title='文字' className={`${styles.toolButton} ${active === 'font' ? styles.active : ''}`} onClick={onFont}>
                     <Type size={20} />
                 </button>
-                <button className={`${styles.toolButton} ${active === 'mosaic' ? styles.active : ''}`} onClick={handlePencilClick}>
+                <button title='马赛克' className={`${styles.toolButton} ${active === 'mosaic' ? styles.active : ''}`} onClick={handlePencilClick}>
                     <Paintbrush size={20}  />
                 </button>
-                <button className={styles.toolButton} onClick={onQuit}>
+                <button title='取消' className={styles.toolButton} onClick={onQuit}>
                     <X size={20} color="#ff0033" />
                 </button>
-                <button className={styles.toolButton} onClick={onCheck}>
+                <button title='确定' className={styles.toolButton} onClick={onCheck}>
                     <Check size={20} color="#44ba81" />
                 </button>
             </div>
             <div className={`${styles.sliderPopup} ${active === 'mosaic' ? styles.visible : ''}`}>
                 <CustomSlider
                     value={mosaicSize}
-                    onChange={setMosaicSize}
+                    onChange={handleMosaicSizeChange}
                     min={1}
                     max={50}
                     thumbSizeMultiplier={0.75}

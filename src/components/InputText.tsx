@@ -65,7 +65,8 @@ export const InputText: React.FC<InputTextProps> = ({
                 left,
                 border: `1px solid ${fontColor}`,
                 width: inputWidth,
-                clipPath
+                clipPath,
+                zIndex:9
             }}
         >
             <input

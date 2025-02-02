@@ -11,12 +11,12 @@ import './assets/css/base.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <HashRouter>
-    <React.StrictMode>
+    {/* <React.StrictMode> */}
       <Routes>
         <Route path="/" element={<App/>}></Route>
         <Route path="/pick" element={<Screenshot/>}></Route>
       </Routes>
-    </React.StrictMode>
+    {/* </React.StrictMode> */}
   </HashRouter>
 
 )
