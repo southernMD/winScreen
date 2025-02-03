@@ -2,9 +2,10 @@
  * @Description: create by southernMD
  */
 import ReactDOM from "react-dom/client";
-import { InputText } from "../components/InputText";
+import { InputText } from "@/components/ScreenShot/InputText";
 import { Shape } from "./Shape";
 import { Point } from "./otherType";
+import { createPortal } from "react-dom";
 
 interface Rect {
     topLeft: Point

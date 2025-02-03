@@ -3,7 +3,6 @@
  */
 import React, { useEffect, useState } from 'react';
 import styles from './MosaicCursor.module.css';
-import { Shape } from '../../class/Shape';
 
 interface MosaicCursorProps {
     size: number;

@@ -5,12 +5,11 @@ import { app, BrowserWindow, desktopCapturer, ipcMain, session,screen, globalSho
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-// import robot from 'robotjs'
 const require = createRequire(import.meta.url)
 const robot = require('robotjs') as typeof import('robotjs')
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
+import fontList from 'font-list'
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -55,6 +54,18 @@ function createWindow() {
         },50)
       }
     },10)
+  })
+  //字体列表
+  ipcMain.handle('get-font-list', () => {
+    return new Promise<any>((resolve, reject) => {
+      fontList.getFonts()
+        .then(fonts => {
+          resolve(fonts)
+        })
+        .catch(err => {
+          console.log(err)
+        })
+    })
   })
   win.webContents.on('destroyed',()=>{
     app.quit()
@@ -154,5 +165,6 @@ app.whenReady().then(()=>{
     }
   ])
   appIcon.setContextMenu(contextMenu)
+  appIcon.setToolTip("大牛马工具箱")
   //托盘事件结束
 })

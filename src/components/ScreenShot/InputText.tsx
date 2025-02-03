@@ -2,8 +2,7 @@
  * @Description: create by southernMD
  */
 import { useEffect, useRef, useState } from "react";
-import "../assets/css/InputText.css";
-import { Shape } from "../class/Shape";
+import "@/assets/css/InputText.css";
 
 interface InputTextProps {
     top: number;

@@ -1,0 +1,91 @@
+.container {
+    height: 100vh;
+    background-color: #f9fafb;
+    padding: 5px;
+    width: 100%;
+}
+
+.wrapper {
+    margin: 0 auto;
+}
+.top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+.title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.card :global(.ant-card-body) {
+    padding: 12px;
+}
+.card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.cardIcon {
+    color: #2563eb;
+}
+
+.cardTitle {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.settingRow {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.settingLabel {
+    min-width: 2rem;
+    color: #4b5563;
+}
+
+.settingsGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.shortcutRow {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.shortcutInput {
+    width: 12rem;
+}
+
+/* Override some antd styles */
+:global(.ant-select) {
+    width: 12rem !important;
+}
+
+:global(.ant-btn-sm) {
+    height: 32px;
+    padding: 0 12px;
+}

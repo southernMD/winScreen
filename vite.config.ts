@@ -1,8 +1,7 @@
 import { defineConfig } from 'vite'
-import path from 'node:path'
+import path, { resolve } from 'node:path'
 import electron from 'vite-plugin-electron/simple'
 import react from '@vitejs/plugin-react'
-
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
@@ -26,4 +25,17 @@ export default defineConfig({
         : {},
     }),
   ],
+  resolve: {
+    alias: {
+      '@': resolve('src/'),
+      '__dirname': path.resolve(__dirname, 'src/__dirname.ts')
+    }
+  },
 })
+function NodeGlobalsPolyfillPlugin(arg0: {
+  // 要提供的全局变量
+  globals: { __dirname: boolean; __filename: boolean }
+}): import("vite").PluginOption {
+  throw new Error('Function not implemented.')
+}
+

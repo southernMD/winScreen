@@ -11,11 +11,10 @@ import {
     Type,
     Paintbrush
 } from 'lucide-react';
-import styles from '../assets/css/CropToolbar.module.css';
+import styles from '@/assets/css/CropToolbar.module.css';
 import { CustomSlider } from './CustomSlider/CustomSlider';
 import { MosaicCursor } from './MosaicCursor/MosaicCursor';
-import ReactDOM from 'react-dom/client'
-import { Shape } from '../class/Shape';
+import { createPortal } from 'react-dom';
 interface CropToolbarProps {
     onCheck?: () => void;
     onQuit?: () => void;
@@ -48,13 +47,13 @@ export const CropToolbar= forwardRef<HTMLDivElement, CropToolbarProps>(({ onChec
         console.log(mosaicSize,isMosaicVisible);
         const dom = document.createElement("div")
         if(active === 'mosaic'){
-            document.body.appendChild(dom)
-            ReactDOM.createRoot(dom).render(
+            createPortal(
                 <MosaicCursor 
                     size={mosaicSize}
                     isVisible={isMosaicVisible}
-                />
+                />,dom
             )
+            document.body.appendChild(dom)
         }
         return ()=>{
             dom.remove()

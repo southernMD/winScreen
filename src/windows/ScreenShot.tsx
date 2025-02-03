@@ -3,15 +3,16 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import './assets/css/Screenshot.css'
-import { MouseCanvasStyle } from "./class/MouseCanvasStyle";
-import { CropToolbar } from "./components/CropToolbar";
-import { Square } from './class/Square'
-import { Shape } from './class/Shape'
-import { Circle } from "./class/Circle";
-import { Pencil } from "./class/Pencil";
-import { Font } from "./class/Font";
-import { Mosaic } from "./class/Mosaic";
+import '@/assets/css/Screenshot.css'
+import { MouseCanvasStyle } from "@/class/ScreenShot/MouseCanvasStyle";
+import { CropToolbar } from "../components/ScreenShot/CropToolbar";
+import { Square } from '@/class/ScreenShot/Square'
+import { Shape } from '@/class/ScreenShot/Shape'
+import { Circle } from "@/class/ScreenShot/Circle";
+import { Pencil } from "@/class/ScreenShot/Pencil";
+import { Font } from "@/class/ScreenShot/Font";
+import { Mosaic } from "@/class/ScreenShot/Mosaic";
+//@ts-ignore
 import {changeDpiDataUrl} from 'changedpi'
 import { createPortal } from "react-dom";
 export default function Screenshot() {
