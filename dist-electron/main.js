@@ -1,4 +1,4 @@
-import { ipcMain, app, BrowserWindow, session, desktopCapturer } from "electron";
+import { nativeImage, ipcMain, app, BrowserWindow, session, desktopCapturer, Tray, Menu } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -10,10 +10,11 @@ const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
 const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
+const trayIcon = nativeImage.createFromPath(path.join(process.env.VITE_PUBLIC, "icon", "icon.png"));
 let win;
 function createWindow() {
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+    icon: trayIcon,
     // frame: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs")
@@ -43,7 +44,7 @@ function createWindow() {
 }
 function createPickWindow(imageUrl) {
   const win2 = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+    icon: trayIcon,
     transparent: true,
     frame: false,
     // 关闭窗口边框
@@ -87,13 +88,34 @@ app.on("activate", () => {
   }
 });
 app.whenReady().then(() => {
-  createWindow();
+  const win2 = createWindow();
   session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
     desktopCapturer.getSources({ types: ["screen"] }).then((sources) => {
       robot.moveMouse(1e4, 1e4);
       callback({ video: sources[0], audio: "loopback" });
     });
   });
+  let appIcon = new Tray(trayIcon);
+  appIcon.on("double-click", () => {
+    win2.show();
+  });
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: "退出",
+      type: "normal",
+      click: () => {
+        app.quit();
+      }
+    },
+    {
+      label: "显示主页面",
+      type: "normal",
+      click: () => {
+        win2.show();
+      }
+    }
+  ]);
+  appIcon.setContextMenu(contextMenu);
 });
 export {
   MAIN_DIST,

@@ -1,7 +1,7 @@
 /*
  * @Description: create by southernMD
  */
-import { app, BrowserWindow, desktopCapturer, ipcMain, session,screen, globalShortcut } from 'electron'
+import { app, BrowserWindow, desktopCapturer, ipcMain, session,screen, globalShortcut, Tray, nativeImage, Menu } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -29,11 +29,12 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
-let win: BrowserWindow | null
+const trayIcon  = nativeImage.createFromPath(path.join(process.env.VITE_PUBLIC, 'icon','icon.png'))
 
+let win: BrowserWindow | null
 function createWindow() {
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    icon: trayIcon,
     // frame: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
@@ -71,7 +72,7 @@ function createWindow() {
 
 function createPickWindow(imageUrl:Base64URLString){
   const win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    icon: trayIcon,
     transparent: true,
     frame: false, // 关闭窗口边框
     alwaysOnTop: true, // 确保窗口始终在最上面
@@ -135,4 +136,23 @@ app.whenReady().then(()=>{
     // is available, it will be used and the media request handler
     // will not be invoked.
   })
+  //托盘事件
+  let appIcon = new Tray(trayIcon)
+  appIcon.on('double-click', () => {
+    win.show()
+  })
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: '退出', type: 'normal', click: () => {
+        app.quit()
+      }
+    },
+    {
+      label: '显示主页面', type: 'normal', click: () => {
+        win.show();
+      }
+    }
+  ])
+  appIcon.setContextMenu(contextMenu)
+  //托盘事件结束
 })

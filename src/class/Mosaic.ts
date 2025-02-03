@@ -6,7 +6,7 @@ import { Shape } from "./Shape";
  */
 export class Mosaic {
     private mosaicSize: number;
-    private canvas: HTMLCanvasElement | null = null;
+    public canvas: HTMLCanvasElement | null = null;
     private img = new Image();
     private imgDataOriginal: Uint8ClampedArray | null = null;
     private imgDataMosaic: Uint8ClampedArray | null = null;
