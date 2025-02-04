@@ -10,10 +10,10 @@ export class Pencil extends Shape {
     strokeStyle:string
     private points: Point[] = [];
 
-    constructor(clientX: number, clientY: number) {
+    constructor(clientX: number, clientY: number,color:string,lineWidth:number) {
         super();
-        this.lineWidth = 2;
-        this.strokeStyle = "#39C5BB"
+        this.lineWidth = lineWidth;
+        this.strokeStyle = color
         this.ctx = Shape.canvas.getContext("2d")!;
         this.ctx.strokeStyle = this.strokeStyle
         this.ctx.lineWidth = this.lineWidth;

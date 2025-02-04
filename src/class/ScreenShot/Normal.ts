@@ -10,6 +10,8 @@ export class Normal {
     endX: number = 0;
     endY: number = 0;
     squareSize: number = 5;
+    lineWidth: number = 2;
+    color:string = "#39C5BB";
     topLeft: Point = { x: 0, y: 0 };
     topMid: Point = { x: 0, y: 0 };
     topRight: Point = { x: 0, y: 0 };

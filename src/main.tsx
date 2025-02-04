@@ -9,17 +9,18 @@ import { HashRouter, Route, Routes } from 'react-router-dom'
 import ScreenShot from '@/windows/Screenshot.tsx'
 import Layout from './Layout.tsx'
 import './assets/css/base.css'
+import KeepAlive from './components/KeepAlive.tsx'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <HashRouter>
     {/* <React.StrictMode> */}
-      <Routes>
-        <Route path="/" element={<Layout/>}>
-          <Route index element={<ScreenShotMain/>}></Route>
-          <Route path='/w' element={<div>w</div>}></Route>
-        </Route>
-        <Route path="/pick" element={<ScreenShot/>}></Route>
-      </Routes>
+    <Routes>
+      <Route path="/" element={<KeepAlive />}>
+        <Route index element={<Layout><ScreenShotMain /></Layout>}></Route>
+        <Route path='/w' element={<Layout><div>w</div></Layout>}></Route>
+      </Route>
+      <Route path="/pick" element={<ScreenShot />}></Route>
+    </Routes>
     {/* </React.StrictMode> */}
   </HashRouter>
 

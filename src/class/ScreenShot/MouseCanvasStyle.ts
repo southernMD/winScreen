@@ -143,7 +143,7 @@ export class MouseCanvasStyle {
     public mouseCursorStyleHandle = (e: MouseEvent): string => {
         const x = e.clientX;
         const y = e.clientY;
-        const blurSquareSize = this.squareSize + 6
+        const blurSquareSize = this.squareSize * 1.5
         const rectStartX = Math.min(this.startX, this.endX);
         const rectStartY = Math.min(this.startY, this.endY);
         const rectEndX = Math.max(this.startX, this.endX);

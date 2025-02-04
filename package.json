@@ -10,6 +10,7 @@
     "tsc": "vite tsx"
   },
   "dependencies": {
+    "ahooks": "^3.8.4",
     "antd": "^5.23.3",
     "changedpi": "^1.0.4",
     "font-list": "^1.5.1",

@@ -1,7 +1,7 @@
 /*
  * @Description: create by southernMD
  */
-import { app, BrowserWindow, desktopCapturer, ipcMain, session,screen, globalShortcut, Tray, nativeImage, Menu } from 'electron'
+import { app, BrowserWindow, desktopCapturer, ipcMain, session, screen, globalShortcut, Tray, nativeImage, Menu } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -10,6 +10,7 @@ const robot = require('robotjs') as typeof import('robotjs')
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 import fontList from 'font-list'
+import { PickWinSetting } from './mainType'
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -28,7 +29,7 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
-const trayIcon  = nativeImage.createFromPath(path.join(process.env.VITE_PUBLIC, 'icon','icon.png'))
+const trayIcon = nativeImage.createFromPath(path.join(process.env.VITE_PUBLIC, 'icon', 'icon.png'))
 
 let win: BrowserWindow | null
 function createWindow() {
@@ -36,7 +37,7 @@ function createWindow() {
     icon: trayIcon,
     // frame: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.mjs'),
+      preload: path.join(__dirname, 'preload.js'),
     },
   })
   win.webContents.toggleDevTools()
@@ -44,16 +45,16 @@ function createWindow() {
   // win.webContents.on('did-finish-load', () => {
   //   win?.webContents.send('main-process-message', (new Date).toLocaleString())
   // })
-  ipcMain.on('close-win',(event)=>{
+  ipcMain.on('close-win', (event) => {
     win!.minimize()
-    let timer = setInterval(()=>{
-      if(win?.isMinimized()){
-        setTimeout(()=>{
+    let timer = setInterval(() => {
+      if (win?.isMinimized()) {
+        setTimeout(() => {
           clearInterval(timer)
           event.returnValue = ''
-        },50)
+        }, 50)
       }
-    },10)
+    }, 10)
   })
   //字体列表
   ipcMain.handle('get-font-list', () => {
@@ -67,10 +68,25 @@ function createWindow() {
         })
     })
   })
-  win.webContents.on('destroyed',()=>{
+  win.webContents.on('destroyed', () => {
     app.quit()
   })
+  let lastKey = ''
+  //截屏快捷键
+  ipcMain.on("set-shortcut-key", ({ }, key: string) => {
+    try {
+      const op = key.replaceAll(" ", "")
+      if (lastKey != "") globalShortcut.unregister(lastKey)
+      globalShortcut.register(op, () => {
+        win?.webContents.send("shortcut-key-pressed")
+      })
+      lastKey = op
+      win?.webContents.send("set-shortcut-key-no-error")
+    } catch (error) {
+        win?.webContents.send("set-shortcut-key-error")
+    }
 
+  })
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
   } else {
@@ -81,7 +97,7 @@ function createWindow() {
   return win
 }
 
-function createPickWindow(imageUrl:Base64URLString){
+function createPickWindow(pickWinSettingObject: PickWinSetting) {
   const win = new BrowserWindow({
     icon: trayIcon,
     transparent: true,
@@ -90,29 +106,29 @@ function createPickWindow(imageUrl:Base64URLString){
     // skipTaskbar: true, // 不显示在任务栏
     resizable: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.mjs'),
+      preload: path.join(__dirname, 'preload.js'),
     },
   });
   win.webContents.toggleDevTools()
-  ipcMain.on("close-screen",()=>{
+  ipcMain.on("close-screen", () => {
     win.destroy()
   })
   if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL+'#/pick')
+    win.loadURL(VITE_DEV_SERVER_URL + '#/pick')
   } else {
     // win.loadFile('dist/index.html')
     win.loadURL(`file://${__dirname}/../dist/index.html#/pick`)
   }
-  win.webContents.on('dom-ready',()=>{
-    win.webContents.send('get-screen-img',{imageUrl})
+  win.webContents.on('dom-ready', () => {
+    win.webContents.send('get-screen-img', pickWinSettingObject)
   })
   win.setFullScreen(true)
-  win.setAlwaysOnTop(true,'screen-saver')
+  win.setAlwaysOnTop(true, 'screen-saver')
   return win
 }
 
-ipcMain.on('create-pick-win',(e,{imageUrl})=>{
-  const pickWin = createPickWindow(imageUrl)
+ipcMain.on('create-pick-win', (e, object: PickWinSetting) => {
+  const pickWin = createPickWindow(object)
   pickWin.focus()
 })
 
@@ -134,7 +150,7 @@ app.on('activate', () => {
   }
 })
 
-app.whenReady().then(()=>{
+app.whenReady().then(() => {
   const win = createWindow()
   session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
     desktopCapturer.getSources({ types: ['screen'] }).then((sources) => {

@@ -15,6 +15,7 @@ import { Mosaic } from "@/class/ScreenShot/Mosaic";
 //@ts-ignore
 import {changeDpiDataUrl} from 'changedpi'
 import { createPortal } from "react-dom";
+import { PickWinSetting } from "@/types/ScreenShotMain";
 export default function Screenshot() {
     const [imgUrl, setImgUrl] = useState('')
     const [mouseCursor, setMouseCursor] = useState('default')
@@ -163,10 +164,7 @@ export default function Screenshot() {
         window.ipcRenderer.send('close-screen')
     }
 
-    const setImgURl = ({ }, { imageUrl }: { imageUrl: string }) => {
-        setImgUrl(imageUrl)
-        mosaic?.setImgCanvas(imageUrl, mouseCanvasCtxRef.current!.clip)
-    }
+
     useEffect(() => {
         if (canvasRef.current && !mouseCanvasCtxRef.current) {
             mouseCanvasCtxRef.current = new MouseCanvasStyle(canvasRef.current);
@@ -182,16 +180,22 @@ export default function Screenshot() {
         window.addEventListener("contextmenu", closeWindowHandle);
         window.addEventListener("keydown", hideHandle)
         window.addEventListener("mousedown", mousedownHandle)
-        window.ipcRenderer.on('get-screen-img', setImgURl)
+        window.ipcRenderer.on('get-screen-img', setImgURlandBaseSet)
         return () => {
             window.removeEventListener("contextmenu", closeWindowHandle)
             window.removeEventListener("keydown", hideHandle)
             window.removeEventListener("mousedown", mousedownHandle)
             window.removeEventListener('mousemove', mouseUpdateHandle)
             window.removeEventListener('mouseup', mouseupHandle)
-            window.ipcRenderer.removeListener('get-screen-img', setImgURl)
+            window.ipcRenderer.removeListener('get-screen-img', setImgURlandBaseSet)
         }
     }, [])
+    let pickSetting:PickWinSetting
+    const setImgURlandBaseSet = ({},setting: PickWinSetting) => {
+        setImgUrl(setting.imageUrl)
+        mosaic?.setImgCanvas(setting.imageUrl, mouseCanvasCtxRef.current!.clip)
+        pickSetting =  setting
+    }
 
     const onDrawSquare = () => {
         if(utilsActive == 'square'){
@@ -204,7 +208,7 @@ export default function Screenshot() {
         if (e.button !== 0) return;
         if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
         if (Shape.selectingShape) return;
-        new Square(e.clientX,e.clientY)
+        new Square(e.clientX,e.clientY,pickSetting.borderSeting.color,pickSetting.borderSeting.borderSize)
     },[])
 
     const onDrawCircle = () => {
@@ -219,7 +223,7 @@ export default function Screenshot() {
         if (e.button !== 0) return;
         if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
         if (Shape.selectingShape) return;
-        new Circle(e.clientX,e.clientY)
+        new Circle(e.clientX,e.clientY,pickSetting.borderSeting.color,pickSetting.borderSeting.borderSize)
     },[])
 
     const onDraw = () => {
@@ -234,7 +238,7 @@ export default function Screenshot() {
         if (e.button !== 0) return;
         if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
         if (Shape.selectingShape) return;
-        new Pencil(e.clientX,e.clientY)
+        new Pencil(e.clientX,e.clientY,pickSetting.pencilSeting.color,pickSetting.pencilSeting.lineWidth)
     },[])
 
     const onFont = () => {
@@ -249,7 +253,7 @@ export default function Screenshot() {
         if (e.button !== 0) return;
         if (!Shape.isInCanvas(e.clientX, e.clientY)) return;
         if (Shape.selectingShape) return;
-        new Font(e.clientX,e.clientY)
+        new Font(e.clientX,e.clientY,pickSetting.fontSeting.color,pickSetting.fontSeting.fontFamily)
     },[])
 
 

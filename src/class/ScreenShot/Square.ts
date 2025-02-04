@@ -1,12 +1,3 @@
-/*
- * @Description: create by southernMD
- */
-/*
- * @Description: create by southernMD
- */
-/*
- * @Description: create by southernMD
- */
 
 import { Normal } from "./Normal";
 import { Point } from "./otherType";
@@ -15,11 +6,13 @@ import { Shape } from "./Shape";
 export class Square extends Shape {
     private normal: Normal;
 
-    constructor(clientX:number,clientY:number) {
+    constructor(clientX:number,clientY:number,color:string,size:number) {
         super();
-        console.log(">>>>实例化");
-        
+        console.log(">>>>实例化",size);
         this.normal = new Normal();
+        this.normal.color = color 
+        this.normal.lineWidth = size
+        this.normal.squareSize = size * 2
         this.normal.startX = clientX - Shape.startX
         this.normal.startY = clientY - Shape.startY
         window.addEventListener("mousemove", this.drawSquare)
@@ -64,7 +57,7 @@ export class Square extends Shape {
         const height = rectEndY - rectStartY;
         if(width == 0 && height == 0) return
         const ctx = Shape.canvas.getContext('2d')!
-        ctx.fillStyle = '#39C5BB';
+        ctx.fillStyle = this.normal.color;
         const points = {
             topLeft: { x: rectStartX - this.normal.squareSize / 2, y: rectStartY - this.normal.squareSize / 2 },
             topRight: { x: rectEndX - this.normal.squareSize / 2, y: rectStartY - this.normal.squareSize / 2 },
@@ -92,8 +85,8 @@ export class Square extends Shape {
             }
         }
         // 绘制矩形
-        ctx.strokeStyle = '#39C5BB';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle =  this.normal.color;
+        ctx.lineWidth = this.normal.lineWidth;
         ctx.strokeRect(rectStartX, rectStartY, width, height);
     }
     public getNormal(){

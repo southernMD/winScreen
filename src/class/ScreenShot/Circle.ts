@@ -3,9 +3,12 @@ import { Shape } from "./Shape";
 
 export class Circle extends Shape {
     private normal: Normal;
-    constructor(clientX: number, clientY: number) {
+    constructor(clientX: number, clientY: number,color:string,size:number) {
         super();
         this.normal = new Normal();
+        this.normal.color = color
+        this.normal.lineWidth = size
+        this.normal.squareSize = size * 2
         this.normal.startX = clientX - Shape.startX
         this.normal.startY = clientY - Shape.startY
         window.addEventListener("mousemove", this.drawCircle)
@@ -49,7 +52,7 @@ export class Circle extends Shape {
         const height = rectEndY - rectStartY;
         if (width == 0 && height == 0) return
         const ctx = Shape.canvas.getContext('2d')!
-        ctx.fillStyle = '#39C5BB';
+        ctx.fillStyle = this.normal.color;
         const points = {
             topLeft: { x: rectStartX - this.normal.squareSize / 2, y: rectStartY - this.normal.squareSize / 2 },
             topRight: { x: rectEndX - this.normal.squareSize / 2, y: rectStartY - this.normal.squareSize / 2 },
@@ -73,8 +76,8 @@ export class Circle extends Shape {
             }
             if (this === Shape.selectingShape?.object) {
                 // 绘制矩形边框
-                ctx.strokeStyle = '#39C5BB';
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = this.normal.color;
+                ctx.lineWidth = this.normal.lineWidth;
                 ctx.strokeRect(rectStartX, rectStartY, width, height);
                 const point = (this.normal as any)[key];
                 ctx.fillRect(point.x, point.y, this.normal.squareSize, this.normal.squareSize);
@@ -86,8 +89,8 @@ export class Circle extends Shape {
         const radiusX = Math.abs(this.normal.topMid.x - this.normal.midLeft.x);
         const radiusY = Math.abs(this.normal.topMid.y - this.normal.midRight.y);
 
-        ctx.strokeStyle = '#39C5BB';
-        ctx.lineWidth = 2
+        ctx.strokeStyle = this.normal.color;
+        ctx.lineWidth = this.normal.lineWidth
         ctx.beginPath();
         ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
         ctx.stroke();

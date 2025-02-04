@@ -291,8 +291,8 @@ export abstract class Shape {
             if (shape !== Shape.selectingShape?.object) shape.drawRectangle()
             else {
                 const normalShape = (shape as Circle | Square).getNormal()
-                ctx.strokeStyle = '#39C5BB';
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = normalShape.color;
+                ctx.lineWidth = normalShape.lineWidth;
                 const rectStartX = Math.min(normalShape.startX, normalShape.endX);
                 const rectStartY = Math.min(normalShape.startY, normalShape.endY);
                 const rectEndX = Math.max(normalShape.startX, normalShape.endX);
@@ -300,7 +300,7 @@ export abstract class Shape {
                 const width = rectEndX - rectStartX;
                 const height = rectEndY - rectStartY;
                 ctx.strokeRect(rectStartX, rectStartY, width, height);
-                ctx.fillStyle = '#39C5BB';
+                ctx.fillStyle =  normalShape.color;
                 const { topLeft, topMid, topRight, midLeft, midRight, bottomLeft, bottomMid, bottomRight } = normalShape.getPostionPoints()
                 ctx.fillRect(topLeft.x, topLeft.y, normalShape.squareSize, normalShape.squareSize);
                 ctx.fillRect(topMid.x, topMid.y, normalShape.squareSize, normalShape.squareSize);
@@ -317,8 +317,8 @@ export abstract class Shape {
                     const radiusX = Math.abs(normalShape.topMid.x - normalShape.midLeft.x);
                     const radiusY = Math.abs(normalShape.topMid.y - normalShape.midRight.y);
 
-                    ctx.strokeStyle = '#39C5BB';
-                    ctx.lineWidth = 2
+                    ctx.strokeStyle = normalShape.color;
+                    ctx.lineWidth = normalShape.lineWidth;
                     ctx.beginPath();
                     ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
                     ctx.stroke();

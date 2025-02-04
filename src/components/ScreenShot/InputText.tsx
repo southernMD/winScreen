@@ -9,7 +9,8 @@ interface InputTextProps {
     left: number;
     fontSize: number;
     fontColor: string;
-    intTxt:string
+    intTxt:string,
+    fontFamily:string
     onUpdateText: (txt: string) => void;
     inputBlur: () => void;
 }
@@ -19,6 +20,7 @@ export const InputText: React.FC<InputTextProps> = ({
     left,
     fontSize,
     fontColor,
+    fontFamily,
     onUpdateText,
     inputBlur,
     intTxt
@@ -74,6 +76,7 @@ export const InputText: React.FC<InputTextProps> = ({
                 style={{
                     fontSize,
                     color: fontColor,
+                    fontFamily:fontFamily
                 }}
                 onInput={inputValueUpdate}
                 onBlur={inputBlur}

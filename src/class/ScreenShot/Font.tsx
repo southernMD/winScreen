@@ -26,15 +26,16 @@ export class Font extends Shape {
     mutationObserver: MutationObserver | null = null
     resizeObserver: ResizeObserver | null = null
     minHeight:number = 0
-    constructor(clientX: number, clientY: number) {
+    constructor(clientX: number, clientY: number,color:string,fontFamily:string) {
         super();
         setTimeout(()=>{
             if(Shape.selectingShape) return
             const x = clientX - Shape.startX
             const y = clientY - Shape.startY
             this.topLeft = { x, y }
+            this.fontFamily = fontFamily
+            this.fontColor = color
             this.inputDom = this.createInputDom(clientX, clientY)
-
         },0)
     }
     private onUpdateText = (txt: string) => {
@@ -97,6 +98,7 @@ export class Font extends Shape {
                 top={clientY}
                 fontColor={this.fontColor}
                 fontSize={this.fontSize}
+                fontFamily={this.fontFamily}
                 onUpdateText={this.onUpdateText}
                 inputBlur={this.inputBlur}
                 intTxt={this.text}
