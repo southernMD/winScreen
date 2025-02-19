@@ -344,13 +344,8 @@ export default function Screenshot() {
                 // 将新的 Canvas 转换为图片并下载
                 const croppedImageDataURL = tempCanvas.toDataURL('image/png', 1.0);
                 const daurl300dpi = changeDpiDataUrl(croppedImageDataURL, 300);
-                
-                const link = document.createElement('a');
-                link.href = daurl300dpi;
-                link.download = 'cropped-image.png';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                console.log(daurl300dpi);
+                window.ipcRenderer.send('save-screenShot',{url:daurl300dpi})
             }
         }
 

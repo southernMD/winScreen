@@ -1,7 +1,7 @@
 // src/pages/ScreenshotMain.tsx
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Card, Select, ColorPicker, Input, Button, Slider, InputNumber } from 'antd';
-import { Palette, Type, Box, Keyboard } from 'lucide-react';
+import { Palette, Type, Box, Keyboard, Folder } from 'lucide-react';
 import styles from '@/assets/css/ScreenShotMain.module.css';
 import { changeDpiDataUrl } from 'changedpi';
 import { specialCharactersMap } from '@/utils/specialCharactersMap';
@@ -14,7 +14,7 @@ interface SettingsProps {
 }
 
 
-const Settings = forwardRef<{}, SettingsProps>(({style}, ref) => {
+const Settings = forwardRef<{}, SettingsProps>(({ style }, ref) => {
   const [fontFamilies, setFontFamilies] = useLocalStorage<{ value: string, label: string }[]>('fontList', [{ value: 'Arial', label: 'Arial' }]);
 
   useEffect(() => {
@@ -148,9 +148,9 @@ const Settings = forwardRef<{}, SettingsProps>(({style}, ref) => {
 
         const imageUrl = canvas.toDataURL('image/png');
         const daurl300dpi = changeDpiDataUrl(imageUrl, 300);
-        console.log('Captured frame as image URL:', daurl300dpi);
+        // console.log('Captured frame as image URL:', daurl300dpi);
 
-        window.ipcRenderer.send('create-pick-win', { imageUrl, borderSeting, pencilSeting, fontSeting, KeyboardSeting });
+        window.ipcRenderer.send('create-pick-win', { imageUrl:daurl300dpi, borderSeting, pencilSeting, fontSeting, KeyboardSeting });
         stream.getTracks().forEach(track => track.stop());
       };
     } catch (err) {

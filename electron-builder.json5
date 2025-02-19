@@ -1,9 +1,9 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "com.bigNMutils.app",
   "asar": true,
-  "productName": "YourAppName",
+  "productName": "大牛马工具箱",
   "directories": {
     "output": "release/${version}"
   },
@@ -26,13 +26,20 @@
         ]
       }
     ],
-    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
+    "artifactName": "${productName}-Windows-${version}-Setup.${ext}",
+    "executableName": '大牛马工具箱',
+    "icon": "dist/icon/icon@5x.png"
   },
   "nsis": {
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
+    "removeDefaultUninstallWelcomePage": false,
+    "artifactName": "${name}-${version}-setup.${ext}",
+    "shortcutName":" ${productName}",
+    "uninstallDisplayName":" ${productName}",
+    "createDesktopShortcut": "always",
+    "createStartMenuShortcut": true,
   },
   "linux": {
     "target": [

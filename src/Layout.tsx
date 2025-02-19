@@ -103,6 +103,7 @@ const App: React.FC<LayoutProps> = ({ children }) => {
                     overflowY: 'auto',
                     scrollbarGutter: 'stable',
                     scrollbarWidth: 'thin',
+                    height:"100px"
                 }}>
                     {children}
                 </Content>

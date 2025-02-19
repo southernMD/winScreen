@@ -3,12 +3,15 @@ import React, { useRef, useState } from 'react';
 import Settings from './ScreenShotMain/Setting';
 import { Button } from 'antd';
 import styles from '@/assets/css/ScreenShotMain.module.css';
+import ImageList from './ScreenShotMain/imageList/ImageList'
 
 const ScreenShotMain: React.FC = () => {
   const settingsRef = useRef<{
     pickHandle: () => void,
     defaultSetting: () => void
   }>(null);
+
+  const imageListRef = useRef<HTMLDivElement>(null);
 
   const callPickHandle = () => {
     if (settingsRef.current) {
@@ -39,6 +42,7 @@ const ScreenShotMain: React.FC = () => {
           </div>
         </div>
         <Settings ref={settingsRef} style={{display:settingsVisible == 2?'block':'none'}} />
+        <ImageList ref={imageListRef} style={{display:settingsVisible == 1?'block':'none'}} />
       </div>
     </div>
   )
