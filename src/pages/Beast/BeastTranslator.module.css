@@ -1,0 +1,14 @@
+/* 滚动条样式 */
+textarea::-webkit-scrollbar {
+    width: 6px;
+}
+
+textarea::-webkit-scrollbar-thumb {
+    background-color: #aaa;
+    border-radius: 4px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+    cursor: pointer;
+    background-color: #999;
+}

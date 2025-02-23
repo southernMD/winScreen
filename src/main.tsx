@@ -4,7 +4,8 @@
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import ScreenShotMain from '@/pages/ScreenshotMain.tsx'
+import ScreenShotMain from '@/pages/ScreenShotMain/ScreenShotMain.tsx'
+import Beast from '@/pages/Beast/Beast.tsx'
 import { HashRouter, Route, Routes } from 'react-router-dom'
 import ScreenShot from '@/windows/Screenshot.tsx'
 import Layout from './Layout.tsx'
@@ -17,7 +18,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <Routes>
       <Route path="/" element={<KeepAlive />}>
         <Route index element={<Layout><ScreenShotMain /></Layout>}></Route>
-        <Route path='/w' element={<Layout><div>w</div></Layout>}></Route>
+        <Route path='/beast' element={<Layout><Beast /></Layout>}></Route>
       </Route>
       <Route path="/pick" element={<ScreenShot />}></Route>
     </Routes>

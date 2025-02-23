@@ -1,9 +1,9 @@
 // src/pages/ScreenshotMain.tsx
 import React, { useRef, useState } from 'react';
-import Settings from './ScreenShotMain/Setting';
+import Settings from './Setting';
 import { Button } from 'antd';
 import styles from '@/assets/css/ScreenShotMain.module.css';
-import ImageList from './ScreenShotMain/imageList/ImageList'
+import ImageList from './imageList/ImageList'
 
 const ScreenShotMain: React.FC = () => {
   const settingsRef = useRef<{

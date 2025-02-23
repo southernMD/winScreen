@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
     ScissorOutlined
 } from '@ant-design/icons';
+import { Cat } from 'lucide-react'
 import type { MenuProps } from 'antd';
 import { Layout, Menu, theme } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -23,7 +24,7 @@ const siderStyle: React.CSSProperties = {
 
 const menuPropsLabel = [
     '裁剪工具',
-    '不是裁剪工具',
+    '兽音译者',
     '不是裁剪工具',
     '不是裁剪工具',
     '不是裁剪工具',
@@ -32,14 +33,14 @@ const menuPropsLabel = [
 
 const items: MenuProps['items'] = [
     ScissorOutlined,
-    ScissorOutlined,
+    Cat,
     ScissorOutlined,
     ScissorOutlined,
     ScissorOutlined,
     ScissorOutlined,
 ].map((icon, index) => ({
     key: String(index + 1),
-    icon: React.createElement(icon),
+    icon: React.createElement(icon, { size: 14 }),
     label: menuPropsLabel[index],
 }));
 
@@ -61,7 +62,7 @@ const App: React.FC<LayoutProps> = ({ children }) => {
             case '/':
                 setSelectedKeys(['1']);
                 break;
-            case '/w':
+            case '/beast':
                 setSelectedKeys(['2']);
                 break;
             default:
@@ -78,7 +79,7 @@ const App: React.FC<LayoutProps> = ({ children }) => {
                 navigate('/');
                 break;
             case '2':
-                navigate('/w');
+                navigate('/beast');
                 break;
             default:
                 break;
