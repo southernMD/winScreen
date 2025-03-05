@@ -1,5 +1,5 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { Button, message, Modal, Checkbox, CheckboxProps } from 'antd';
+import { Button, message, Modal, Checkbox, CheckboxProps, Empty } from 'antd';
 import { Trash2, Copy, FolderInput } from 'lucide-react';
 import styles from './ImageList.module.css';
 import { ImageCard } from './ImageCard';
@@ -37,7 +37,7 @@ const ImageList = forwardRef<HTMLDivElement, imageListProps>(({ style }, ref) =>
   //TODO: 批量移动和复制时如果文件路径不存在没有操作，目前为弹出提示，且只要有一个文件路径不存在就停止操作
   const handleBatchAction = async (action: 'delete' | 'copy' | 'move') => {
     const optionList = Images.filter(img => Array.from(selectedImages).includes(img.hash))
-    if(optionList.length === 0) return
+    if (optionList.length === 0) return
     switch (action) {
       case 'delete':
         Modal.confirm({
@@ -48,33 +48,33 @@ const ImageList = forwardRef<HTMLDivElement, imageListProps>(({ style }, ref) =>
           centered: true,
           onOk: async () => {
             if (deleteLocalCheckBoxRef.current?.ifDeleteLocal) {
-              await window.ipcRenderer.invoke('delete-images', { imagePaths:optionList.map(item => item.path) });
+              await window.ipcRenderer.invoke('delete-images', { imagePaths: optionList.map(item => item.path) });
             }
             setImages(Images.filter(img => !optionList.includes(img)));
             toggleSelectMode()
           },
         });
-      break;
-      case 'copy':{
-        const { success } = await window.ipcRenderer.invoke('copy-images', { imagePaths:optionList.map(item => item.path) });
-        if(success){
+        break;
+      case 'copy': {
+        const { success } = await window.ipcRenderer.invoke('copy-images', { imagePaths: optionList.map(item => item.path) });
+        if (success) {
           toggleSelectMode()
-        }else{
+        } else {
           message.error('复制失败,可能是因为路径丢失')
         }
         break;
       }
-      case 'move':{
-        const {success,newPaths } = await window.ipcRenderer.invoke('move-images', { imagePaths:optionList.map(item => item.path) });
-        if(success){
-          setImages(Images.map((img,index)=>{
+      case 'move': {
+        const { success, newPaths } = await window.ipcRenderer.invoke('move-images', { imagePaths: optionList.map(item => item.path) });
+        if (success) {
+          setImages(Images.map((img, index) => {
             return {
               ...img,
-              path:newPaths[index]
+              path: newPaths[index]
             }
           }))
           toggleSelectMode()
-        }else{
+        } else {
           message.error('移动失败,可能是因为路径丢失')
         }
         break;
@@ -111,7 +111,7 @@ const ImageList = forwardRef<HTMLDivElement, imageListProps>(({ style }, ref) =>
         message.success('复制成功');
         //ant message
         if (!exist) {
-          showImageNotFoundModal(data,hash)
+          showImageNotFoundModal(data, hash)
         }
         break;
       }
@@ -122,7 +122,7 @@ const ImageList = forwardRef<HTMLDivElement, imageListProps>(({ style }, ref) =>
       case 'openFile': {
         const { success } = await window.ipcRenderer.invoke('open-image-File', { imagePath })
         if (!success) {
-          showImageNotFoundModal(data,hash)
+          showImageNotFoundModal(data, hash)
         }
       }
     }
@@ -166,10 +166,10 @@ const ImageList = forwardRef<HTMLDivElement, imageListProps>(({ style }, ref) =>
       }
     });
   };
-  
+
   useEffect(() => {
     window.ipcRenderer.on("finished-save-image", ({ }, { url, path, fileName, hash }) => {
-      setImages([{ fileName, data: url, path, hash } , ...Images ]);
+      setImages([{ fileName, data: url, path, hash }, ...Images]);
     })
     return () => {
       window.ipcRenderer.removeAllListeners("finished-save-image")
@@ -212,21 +212,30 @@ const ImageList = forwardRef<HTMLDivElement, imageListProps>(({ style }, ref) =>
           {isSelectMode ? '取消' : '多选'}
         </Button>
       </div>
-      <div className={styles.grid}>
-        {Images.map((image) => (
-          <ImageCard
-            key={image.path}
-            src={image.data}
-            isSelectable={isSelectMode}
-            isSelected={selectedImages.has(image.hash)}
-            onSelect={(selected) => handleImageSelect(image.hash, selected)}
-            onDelete={() => handleSingleAction('delete', image.hash)}
-            onCopy={() => handleSingleAction('copy', image.hash)}
-            onOpenFolder={() => handleSingleAction('openFolder', image.hash)}
-            onOpenFile={() => handleSingleAction('openFile', image.hash)}
-          />
-        ))}
-      </div>
+      {
+        Images.length != 0 ?
+          <div className={styles.grid}>
+            {Images.map((image) => (
+              <ImageCard
+                key={image.path}
+                src={image.data}
+                isSelectable={isSelectMode}
+                isSelected={selectedImages.has(image.hash)}
+                onSelect={(selected) => handleImageSelect(image.hash, selected)}
+                onDelete={() => handleSingleAction('delete', image.hash)}
+                onCopy={() => handleSingleAction('copy', image.hash)}
+                onOpenFolder={() => handleSingleAction('openFolder', image.hash)}
+                onOpenFile={() => handleSingleAction('openFile', image.hash)}
+              />
+            ))}
+          </div>
+          : <Empty
+            style={{ width: '100%',marginInline:'inherit' }}
+            description={
+              '没有图片'
+            } />
+      }
+
     </div>
   );
 })

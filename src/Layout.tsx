@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
     ScissorOutlined
 } from '@ant-design/icons';
-import { Cat } from 'lucide-react'
+import { Cat, Palette } from 'lucide-react'
 import type { MenuProps } from 'antd';
 import { Layout, Menu, theme } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -25,7 +25,7 @@ const siderStyle: React.CSSProperties = {
 const menuPropsLabel = [
     '裁剪工具',
     '兽音译者',
-    '不是裁剪工具',
+    '取色器',
     '不是裁剪工具',
     '不是裁剪工具',
     '不是裁剪工具',
@@ -34,7 +34,7 @@ const menuPropsLabel = [
 const items: MenuProps['items'] = [
     ScissorOutlined,
     Cat,
-    ScissorOutlined,
+    Palette,
     ScissorOutlined,
     ScissorOutlined,
     ScissorOutlined,
@@ -65,6 +65,9 @@ const App: React.FC<LayoutProps> = ({ children }) => {
             case '/beast':
                 setSelectedKeys(['2']);
                 break;
+            case '/colorPick':
+                setSelectedKeys(['3']);
+                break;    
             default:
                 setSelectedKeys(['1']); // 默认选中第一个菜单项
                 break;
@@ -80,6 +83,9 @@ const App: React.FC<LayoutProps> = ({ children }) => {
                 break;
             case '2':
                 navigate('/beast');
+                break;
+            case '3':
+                navigate('/colorPick');
                 break;
             default:
                 break;
