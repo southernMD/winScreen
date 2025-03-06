@@ -41,102 +41,23 @@ const Settings = forwardRef<{}, SettingsProps>(({ style }, ref) => {
 
   const [KeyboardSeting, setKeyboardSetting] = useLocalStorage<{ pick: string }>('keyboardSetting', { pick: "Ctrl + F1" });
 
-  // const shortcutInputRef = useRef<InputRef | null>(null);
-
   const [keyboardStatus, keyboardStatusSetting] = useState<"error" | "">("")
-  // const keyboardStatusSettingErrorHandle = () => {
-  //   keyboardStatusSetting("error")
-  // }
-  // const keyboardStatusSettingSuccessHandle = () => {
-  //   keyboardStatusSetting("")
-  // }
-  // useEffect(() => {
-  //   const inputElement = shortcutInputRef.current?.input;
-  //   if (inputElement) {
-  //     inputElement.addEventListener('keydown', fn1);
-  //     inputElement.addEventListener('keyup', fn2);
-  //     inputElement.addEventListener("blur", settingKeyBord)
-  //     window.ipcRenderer.on("set-shortcut-key-error", keyboardStatusSettingErrorHandle)
-  //     window.ipcRenderer.on("set-shortcut-key-no-error", keyboardStatusSettingSuccessHandle)
-  //     settingKeyBord()
-  //   }
 
-  //   return () => {
-  //     if (inputElement) {
-  //       inputElement.removeEventListener('keydown', fn1);
-  //       inputElement.removeEventListener('keyup', fn2);
-  //       inputElement.removeEventListener("blur", settingKeyBord)
-  //       window.ipcRenderer.removeAllListeners('shortcut-key-pressed')
-  //       window.ipcRenderer.removeAllListeners("set-shortcut-key-error")
-  //       window.ipcRenderer.removeAllListeners("set-shortcut-key-no-error")
-  //     }
-  //   };
-  // }, [shortcutInputRef]);
   useEffect(() => {
     window.ipcRenderer.on('shortcut-key-pressed', pickHandle);
     settingKeyBord()
     return () => {
       window.ipcRenderer.removeAllListeners('shortcut-key-pressed')
     }
-  },[])
+  }, [])
   const settingKeyBord = () => {
-    // window.ipcRenderer.removeAllListeners('shortcut-key-pressed')
-    window.ipcRenderer.send('set-shortcut-key', KeyboardSeting.pick)
-    // window.ipcRenderer.on('shortcut-key-pressed', pickHandle);
+    window.ipcRenderer.send('set-key', { key: KeyboardSeting.pick, name: 'shortcut' })
   }
 
-  // let string = '';
-  // let flag = false;
-
-  // const fn1 = (event: KeyboardEvent) => {
-  //   event.preventDefault();
-  //   flag = false;
-  //   let s: string[] = [];
-  //   if (['Enter', 'Process', 'Meta', 'Backspace', 'Delete', 'Insert', 'Pause', 'ScrollLock', 'Tab', 'CapsLock', 'Cancel'].includes(event.key)) return;
-  //   if (event.ctrlKey) s.push('Ctrl');
-  //   if (event.shiftKey) s.push('Shift');
-  //   if (event.altKey) s.push('Alt');
-  //   if (!(['Control', 'Shift', 'Alt'].includes(event.key)) && s.length !== 0) {
-  //     s.push(event.key.split('Arrow')[1] ?? (specialCharactersMap.has(event.code) ? specialCharactersMap.get(event.code) : event.key.slice(0, 1).toUpperCase() + event.key.slice(1).toLowerCase()));
-  //     string = s.join(' + ');
-  //     setKeyboardSetting({ ...KeyboardSeting, pick: string });
-  //   } else if (s.length === 0) {
-  //     string = event.key.split('Arrow')[1] ?? (specialCharactersMap.has(event.code) ? specialCharactersMap.get(event.code) : event.key.slice(0, 1).toUpperCase() + event.key.slice(1).toLowerCase());
-  //     setKeyboardSetting({ ...KeyboardSeting, pick: string });
-  //   } else if (s.length !== 0) {
-  //     string = s.join(' + ');
-  //     string += ' + ';
-  //     setKeyboardSetting({ ...KeyboardSeting, pick: string });
-  //   }
-  // };
-
-  // const fn2 = (event: KeyboardEvent) => {
-  //   event.preventDefault();
-
-  //   if (!['Control', 'Shift', 'Alt', 'Enter', 'Process', 'Meta', 'Backspace', 'Delete', 'Insert', 'Pause', 'ScrollLock', 'Tab', 'CapsLock', 'Cancel'].includes(event.key)) {
-  //     setKeyboardSetting({ ...KeyboardSeting, pick: string });
-  //     shortcutInputRef.current?.blur();
-  //     return;
-  //   }
-  //   if (!event.ctrlKey && !event.shiftKey && !event.altKey && !flag) {
-  //     string = 'Ctrl + F1';
-  //     setKeyboardSetting({ ...KeyboardSeting, pick: string });
-  //     shortcutInputRef.current?.blur();
-  //   } else if (!flag) {
-  //     let s: string[] = [];
-  //     if (event.ctrlKey) s.push('Ctrl');
-  //     if (event.shiftKey) s.push('Shift');
-  //     if (event.altKey) s.push('Alt');
-  //     string = s.join(' + ');
-  //     if (!string.endsWith('+ ')) string += ' + ';
-  //     setKeyboardSetting({ ...KeyboardSeting, pick: string });
-  //     shortcutInputRef.current?.blur();
-  //   }
-  // };
-  const setKeyboardSettingHandle = (str:string)=>{
-    setKeyboardSetting({...KeyboardSeting,pick:str})
+  const setKeyboardSettingHandle = (str: string) => {
+    setKeyboardSetting({ ...KeyboardSeting, pick: str })
   }
-  const keyboardStatusChange = (str:"error" | "")=>{
+  const keyboardStatusChange = (str: "error" | "") => {
     keyboardStatusSetting(str)
   }
 
@@ -164,7 +85,7 @@ const Settings = forwardRef<{}, SettingsProps>(({ style }, ref) => {
         const daurl300dpi = changeDpiDataUrl(imageUrl, 300);
         // console.log('Captured frame as image URL:', daurl300dpi);
 
-        window.ipcRenderer.send('create-pick-win', { imageUrl:daurl300dpi, borderSeting, pencilSeting, fontSeting, KeyboardSeting });
+        window.ipcRenderer.send('create-pick-win', { imageUrl: daurl300dpi, borderSeting, pencilSeting, fontSeting, KeyboardSeting });
         stream.getTracks().forEach(track => track.stop());
       };
     } catch (err) {
@@ -278,14 +199,14 @@ const Settings = forwardRef<{}, SettingsProps>(({ style }, ref) => {
         <div className={styles.settingsGroup}>
           <div className={styles.shortcutRow}>
             <span className={styles.settingLabel}>截图</span>
-            {/* <Input
-              status={keyboardStatus}
-              ref={shortcutInputRef}
-              className={styles.shortcutInput}
-              value={KeyboardSeting.pick}
-              onChange={(e) => setKeyboardSetting({ ...KeyboardSeting, pick: e.target.value })}
-            /> */}
-            <KeyBoardInput updata={setKeyboardSettingHandle} blur={settingKeyBord} electronEventRegisterStatus={true} onKeyboardStatusChange={keyboardStatusChange}/>
+            <KeyBoardInput
+              updata={setKeyboardSettingHandle}
+              blur={settingKeyBord}
+              electronEventRegisterStatus={true}
+              onKeyboardStatusChange={keyboardStatusChange}
+              initValue={KeyboardSeting.pick}
+              eventName='shortcut'
+            />
             <span style={{ color: "red", display: keyboardStatus == "error" ? "block" : "none" }}>该快捷键已被占用</span>
           </div>
         </div>

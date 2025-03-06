@@ -74,19 +74,21 @@ function createWindow() {
   mainwin.webContents.on('destroyed', () => {
     app.quit()
   })
-  let lastKey = ''
+  let lastKeyMap = new Map<string, string>()
   //截屏快捷键
-  ipcMain.on("set-shortcut-key", ({ }, key: string) => {
+  ipcMain.on("set-key", ({ }, { key, name }: { key: string, name: string }) => {
     try {
+      // shortcut
       const op = key.replaceAll(" ", "")
-      if (lastKey != "") globalShortcut.unregister(lastKey)
+      console.log('lastKey:' + lastKeyMap.get(name) + 'op:' + op);
+      if (lastKeyMap.get(name)) globalShortcut.unregister(lastKeyMap.get(name)!)
       globalShortcut.register(op, () => {
-        mainwin?.webContents.send("shortcut-key-pressed")
+        mainwin?.webContents.send(`${name}-key-pressed`)
       })
-      lastKey = op
-      mainwin?.webContents.send("set-shortcut-key-no-error")
+      lastKeyMap.set(name, op)
+      mainwin?.webContents.send(`set-${name}-key-no-error`)
     } catch (error) {
-      mainwin?.webContents.send("set-shortcut-key-error")
+      mainwin?.webContents.send(`set-${name}-key-error`)
     }
 
   })
@@ -134,20 +136,20 @@ function createPickWindow(pickWinSettingObject: PickWinSetting) {
   })
 
   // 绑定当前窗口的事件监听器
-  const handleSave = ({}, { url }:{url:string}) => {
+  const handleSave = ({ }, { url }: { url: string }) => {
     if (win.isDestroyed()) return;
     win.webContents.downloadURL(url);
 
-    downloadSession.once('will-download', (event, item,webContents) => {
+    downloadSession.once('will-download', (event, item, webContents) => {
       item.setSaveDialogOptions({
         title: '选择存储路径',
         defaultPath: path.join(app.getPath("documents"), "da_nui_ma_toolbox", "Screenshots", `${Date.now()}.png`),
       });
-      item.once('done', async ({},state) => {
-        console.log(item.getSavePath(),state === 'completed');
-        if(state === 'completed'){
+      item.once('done', async ({ }, state) => {
+        console.log(item.getSavePath(), state === 'completed');
+        if (state === 'completed') {
           const hash = await calculateBase64Hash(url)
-          mainwin!.webContents.send('finished-save-image',{hash,url,path:item.getSavePath(),fileName:basename(item.getSavePath())})
+          mainwin!.webContents.send('finished-save-image', { hash, url, path: item.getSavePath(), fileName: basename(item.getSavePath()) })
           mainwin!.restore()
         }
         downloadSession.removeAllListeners();
@@ -231,31 +233,31 @@ app.whenReady().then(() => {
 
 })
 
-ipcMain.handle('delete-image',({},{ imagePath })=>{
+ipcMain.handle('delete-image', ({ }, { imagePath }) => {
   if (fs.existsSync(imagePath)) {
     fs.unlinkSync(imagePath);
   }
   return true
 })
-ipcMain.handle('delete-images',({},{ imagePaths })=>{
-  imagePaths.forEach((path:string) => {
+ipcMain.handle('delete-images', ({ }, { imagePaths }) => {
+  imagePaths.forEach((path: string) => {
     if (fs.existsSync(path)) {
       fs.unlinkSync(path);
     }
   });
   return true
 })
-ipcMain.handle('copy-image',async ({},{ imagePath,data })=>{
+ipcMain.handle('copy-image', async ({ }, { imagePath, data }) => {
   if (fs.existsSync(imagePath)) {
     const arrayBuffer = fs.readFileSync(imagePath).buffer
-    return {exist:true,arrayBuffer}
-  }else{
+    return { exist: true, arrayBuffer }
+  } else {
     const arrayBuffer = await dataURLtoArrayBuffer(data)
-    return {exist:false,arrayBuffer}
+    return { exist: false, arrayBuffer }
   }
 })
 
-ipcMain.handle("resave-screenShot", async ({}, { base64 }) => {
+ipcMain.handle("resave-screenShot", async ({ }, { base64 }) => {
   const { canceled, filePath } = await dialog.showSaveDialog(mainwin!, {
     title: '选择存储路径',
     defaultPath: path.join(app.getPath("documents"), "da_nui_ma_toolbox", "Screenshots", `${Date.now()}.png`),
@@ -270,40 +272,40 @@ ipcMain.handle("resave-screenShot", async ({}, { base64 }) => {
         return { success: false, error: err };
       }
     });
-    return { canceled,success: true, filePath,fileName:basename(filePath) };
+    return { canceled, success: true, filePath, fileName: basename(filePath) };
   } else {
     return { canceled };
   }
 });
 
-ipcMain.on("open-image-Folder",({},{ imagePath })=>{
-  if(fs.existsSync(imagePath)){
+ipcMain.on("open-image-Folder", ({ }, { imagePath }) => {
+  if (fs.existsSync(imagePath)) {
     shell.showItemInFolder(imagePath)
-  }else{
+  } else {
     shell.openPath(dirname(imagePath))
   }
 })
 
-ipcMain.handle("open-image-File",({},{ imagePath })=>{
-  if(fs.existsSync(imagePath)){
+ipcMain.handle("open-image-File", ({ }, { imagePath }) => {
+  if (fs.existsSync(imagePath)) {
     shell.openPath(imagePath)
-    return { success: true}
-  }else{
-    return { success: false}
+    return { success: true }
+  } else {
+    return { success: false }
   }
 })
 
-ipcMain.handle("copy-images",async ({},{ imagePaths })=>{
+ipcMain.handle("copy-images", async ({ }, { imagePaths }) => {
   const { canceled, filePaths } = await dialog.showOpenDialog(mainwin!, {
     title: '选择存储路径',
-    properties:['openDirectory','showHiddenFiles']
+    properties: ['openDirectory', 'showHiddenFiles']
   });
   const filePath = filePaths[0]
-  if(!canceled){
+  if (!canceled) {
     try {
       // 确保目标文件夹存在
       fs.mkdirSync(filePath, { recursive: true });
-  
+
       // 遍历 imagePaths 数组，复制每个文件
       for (const imagePath of imagePaths) {
         const fileName = path.basename(imagePath); // 获取文件名
@@ -319,15 +321,15 @@ ipcMain.handle("copy-images",async ({},{ imagePaths })=>{
   }
 })
 
-ipcMain.handle('move-images', async  ({},{ imagePaths })=>{
+ipcMain.handle('move-images', async ({ }, { imagePaths }) => {
   const { canceled, filePaths } = await dialog.showOpenDialog(mainwin!, {
     title: '选择存储路径',
-    properties:['openDirectory','showHiddenFiles']
+    properties: ['openDirectory', 'showHiddenFiles']
   });
   const filePath = filePaths[0]
   console.log(filePath);
-  
-  if(!canceled){
+
+  if (!canceled) {
     try {
       fs.mkdirSync(filePath, { recursive: true });
       const newPaths = []
@@ -339,7 +341,7 @@ ipcMain.handle('move-images', async  ({},{ imagePaths })=>{
         fs.renameSync(imagePath, destinationPath); // 移动文件
       }
       shell.openPath(filePath)
-      return { success: true,newPaths};
+      return { success: true, newPaths };
     } catch (error) {
       console.error('复制文件失败:', error);
       return { success: false, error: error.message };

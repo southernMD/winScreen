@@ -9,7 +9,7 @@ function KeepAlive() {
     const forceUpdate = useUpdate();
 
     useEffect(() => {
-
+        console.log(pathname);
         if (!componentList.current.has(pathname)) {
             componentList.current.set(pathname, outLet);
         }
