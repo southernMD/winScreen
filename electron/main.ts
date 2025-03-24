@@ -10,6 +10,23 @@ const require = createRequire(import.meta.url)
 const robot = require('robotjs') as typeof import('robotjs')
 console.log(process.env.VITE_APP_NAME);
 
+const gotTheLock = app.requestSingleInstanceLock()
+let mainwin: BrowserWindow | null
+
+if (!gotTheLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    // 输出从第二个实例中接收到的数据
+
+    // 有人试图运行第二个实例，我们应该关注我们的窗口
+    if (mainwin) {
+      if (mainwin.isMinimized()) mainwin.restore()
+        mainwin.focus()
+    }
+  })
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 import fontList from 'font-list'
 import { PickWinSetting } from './mainType'
@@ -34,7 +51,6 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 const trayIcon = nativeImage.createFromPath(path.join(process.env.VITE_PUBLIC, 'icon', 'icon.png'))
 
-let mainwin: BrowserWindow | null
 function createWindow() {
   mainwin = new BrowserWindow({
     icon: trayIcon,
